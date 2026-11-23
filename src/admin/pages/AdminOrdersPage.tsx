@@ -367,41 +367,43 @@ export function AdminOrdersPage() {
                   Ordered Items
                 </h4>
                 <div className="border border-neutral-200 rounded-xl overflow-hidden">
-                  <table className="w-full text-left">
-                    <thead className="bg-neutral-50 border-b text-neutral-500">
-                      <tr>
-                        <th className="p-3">Product</th>
-                        <th className="p-3">Variant</th>
-                        <th className="p-3 text-right">Qty</th>
-                        <th className="p-3 text-right">Unit</th>
-                        <th className="p-3 text-right">Subtotal</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {(selectedOrder.items || []).map((item) => (
-                        <tr key={item.id}>
-                          <td className="p-3 font-medium text-[#090909]">
-                            {item.product_name}
-                            {item.product_sku && (
-                              <span className="block text-[10px] font-mono text-neutral-500">
-                                {item.product_sku}
-                              </span>
-                            )}
-                          </td>
-                          <td className="p-3 text-neutral-600">
-                            {[item.size, item.colour].filter(Boolean).join(' / ') || 'Standard'}
-                          </td>
-                          <td className="p-3 text-right tabular-nums">{item.quantity}</td>
-                          <td className="p-3 text-right tabular-nums">
-                            {formatPrice(item.unit_price, settings.currency_symbol)}
-                          </td>
-                          <td className="p-3 text-right font-semibold tabular-nums">
-                            {formatPrice(item.subtotal, settings.currency_symbol)}
-                          </td>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left min-w-[420px]">
+                      <thead className="bg-neutral-50 border-b text-neutral-500">
+                        <tr>
+                          <th className="p-3">Product</th>
+                          <th className="p-3">Variant</th>
+                          <th className="p-3 text-right">Qty</th>
+                          <th className="p-3 text-right">Unit</th>
+                          <th className="p-3 text-right">Subtotal</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y">
+                        {(selectedOrder.items || []).map((item) => (
+                          <tr key={item.id}>
+                            <td className="p-3 font-medium text-[#090909]">
+                              {item.product_name}
+                              {item.product_sku && (
+                                <span className="block text-[10px] font-mono text-neutral-500">
+                                  {item.product_sku}
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-3 text-neutral-600">
+                              {[item.size, item.colour].filter(Boolean).join(' / ') || 'Standard'}
+                            </td>
+                            <td className="p-3 text-right tabular-nums">{item.quantity}</td>
+                            <td className="p-3 text-right tabular-nums">
+                              {formatPrice(item.unit_price, settings.currency_symbol)}
+                            </td>
+                            <td className="p-3 text-right font-semibold tabular-nums">
+                              {formatPrice(item.subtotal, settings.currency_symbol)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
 

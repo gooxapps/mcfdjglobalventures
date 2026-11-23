@@ -47,7 +47,10 @@ export function AdminUsersAndLogsPage() {
 
   const handleCreateAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!session?.access_token) return;
+    if (!session?.access_token) {
+      showToast('Preview Mode: Connect your Supabase database to create administrators.', 'error');
+      return;
+    }
     setCreating(true);
     try {
       const res = await fetch('/api/admin/users', {
@@ -78,7 +81,10 @@ export function AdminUsersAndLogsPage() {
   };
 
   const handleToggleAdmin = async (record: AdminUserRecord) => {
-    if (!session?.access_token) return;
+    if (!session?.access_token) {
+      showToast('Preview Mode: Connect your Supabase database to update administrator access.', 'error');
+      return;
+    }
     try {
       const res = await fetch(`/api/admin/users/${record.user_id}`, {
         method: 'PATCH',
@@ -252,51 +258,53 @@ export function AdminUsersAndLogsPage() {
           </form>
 
           <div className="bg-white border border-[#E7DEC9] rounded-xl overflow-hidden">
-            <table className="w-full text-left">
-              <thead className="bg-[#FAF5EE] border-b border-[#E7DEC9] text-neutral-600">
-                <tr>
-                  <th className="p-3.5 font-semibold">Administrator</th>
-                  <th className="p-3.5 font-semibold">Role</th>
-                  <th className="p-3.5 font-semibold">Status</th>
-                  <th className="p-3.5 text-right font-semibold">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-neutral-100">
-                {admins.map((a) => (
-                  <tr key={a.id}>
-                    <td className="p-3.5">
-                      <p className="font-semibold text-[#090909]">
-                        {a.profile?.full_name || 'Administrator'}
-                      </p>
-                      <p className="text-neutral-500">{a.profile?.email || a.user_id}</p>
-                    </td>
-                    <td className="p-3.5 font-mono text-[11px]">{a.role}</td>
-                    <td className="p-3.5">
-                      <span
-                        className={`px-2 py-0.5 rounded text-[11px] font-medium ${
-                          a.is_active
-                            ? 'bg-emerald-50 text-emerald-700'
-                            : 'bg-red-50 text-red-700'
-                        }`}
-                      >
-                        {a.is_active ? 'Active' : 'Suspended'}
-                      </span>
-                    </td>
-                    <td className="p-3.5 text-right">
-                      {a.user_id !== user?.id && (
-                        <button
-                          type="button"
-                          onClick={() => handleToggleAdmin(a)}
-                          className="px-3 py-1 rounded border border-neutral-300 font-medium hover:border-[#090909]"
-                        >
-                          {a.is_active ? 'Suspend' : 'Activate'}
-                        </button>
-                      )}
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-[#FAF5EE] border-b border-[#E7DEC9] text-neutral-600">
+                  <tr>
+                    <th className="p-3.5 font-semibold">Administrator</th>
+                    <th className="p-3.5 font-semibold">Role</th>
+                    <th className="p-3.5 font-semibold">Status</th>
+                    <th className="p-3.5 text-right font-semibold">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-neutral-100">
+                  {admins.map((a) => (
+                    <tr key={a.id}>
+                      <td className="p-3.5">
+                        <p className="font-semibold text-[#090909]">
+                          {a.profile?.full_name || 'Administrator'}
+                        </p>
+                        <p className="text-neutral-500">{a.profile?.email || a.user_id}</p>
+                      </td>
+                      <td className="p-3.5 font-mono text-[11px]">{a.role}</td>
+                      <td className="p-3.5">
+                        <span
+                          className={`px-2 py-0.5 rounded text-[11px] font-medium ${
+                            a.is_active
+                              ? 'bg-emerald-50 text-emerald-700'
+                              : 'bg-red-50 text-red-700'
+                          }`}
+                        >
+                          {a.is_active ? 'Active' : 'Suspended'}
+                        </span>
+                      </td>
+                      <td className="p-3.5 text-right">
+                        {a.user_id !== user?.id && (
+                          <button
+                            type="button"
+                            onClick={() => handleToggleAdmin(a)}
+                            className="px-3 py-1 rounded border border-neutral-300 font-medium hover:border-[#090909]"
+                          >
+                            {a.is_active ? 'Suspend' : 'Activate'}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}

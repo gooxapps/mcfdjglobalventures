@@ -1,20 +1,23 @@
 import React, { useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
-  Menu,
-  Search,
-  ShoppingBag,
-  UserCheck,
-  X,
-  MessageCircle,
-  Instagram,
+  ChevronDown,
   Facebook,
-  Youtube,
+  Globe,
+  Headphones,
+  Instagram,
+  Lock,
+  Menu,
   Music2,
+  Search,
+  ShoppingCart,
+  X,
+  Youtube,
 } from 'lucide-react';
 import { BrandLogo } from '@/src/components/BrandLogo';
 import { CartDrawer } from '@/src/components/CartDrawer';
 import { FloatingWhatsAppButton } from '@/src/components/FloatingWhatsAppButton';
+import { MobileBottomNav } from '@/src/components/MobileBottomNav';
 import { useCart } from '@/src/contexts/CartContext';
 import { useStore } from '@/src/contexts/StoreContext';
 import { isSafeHttpUrl } from '@/src/utils/format';
@@ -24,7 +27,8 @@ export function StorefrontLayout() {
   const { settings, categories } = useStore();
   const { totalItems, openDrawer } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [shopDropdownOpen, setShopDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const navigate = useNavigate();
@@ -32,7 +36,7 @@ export function StorefrontLayout() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const q = searchTerm.trim();
-    setSearchOpen(false);
+    setMobileSearchOpen(false);
     setMobileMenuOpen(false);
     navigate(q ? `/shop?q=${encodeURIComponent(q)}` : '/shop');
   };
@@ -47,29 +51,33 @@ export function StorefrontLayout() {
 
   const navLinks = [
     { label: 'Home', to: '/' },
-    { label: 'Shop', to: '/shop' },
+    { label: 'Shop', to: '/shop', hasCategories: true },
     { label: 'Collections', to: '/collections' },
     { label: 'About Us', to: '/about' },
     { label: 'Contact', to: '/contact' },
   ];
 
   const socialItems = [
-    { label: 'Instagram', url: settings.social_links?.instagram, icon: Instagram },
     { label: 'Facebook', url: settings.social_links?.facebook, icon: Facebook },
+    { label: 'Instagram', url: settings.social_links?.instagram, icon: Instagram },
     { label: 'TikTok', url: settings.social_links?.tiktok, icon: Music2 },
     { label: 'YouTube', url: settings.social_links?.youtube, icon: Youtube },
   ].filter((s) => isSafeHttpUrl(s.url));
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAF5EE] text-[#242424]">
-      {/* Slim Announcement Bar */}
+    <div className="min-h-screen flex flex-col bg-[#FAF5EE] text-[#242424] overflow-x-clip">
+      {/* Top Announcement Bar matching Luxury Header Design */}
       {!bannerDismissed && (
-        <div className="bg-[#090909] text-[#FAF5EE] border-b border-[#D4AF5A]/20 text-xs">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 h-9 flex items-center justify-between gap-4">
-            <p className="truncate text-[11px] sm:text-xs text-[#FAF5EE]/90">
-              {settings.announcement_text}
-            </p>
-            <div className="flex items-center gap-4 shrink-0">
+        <div className="bg-[#090909] text-[#FAF5EE] border-b border-[#D4AF5A]/20 text-[11px] sm:text-xs">
+          <div className="max-w-7xl mx-auto px-3 sm:px-6 min-h-[36px] py-1.5 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="inline-flex items-center gap-1.5 text-[#FAF5EE]/90 truncate">
+                <Globe className="w-3.5 h-3.5 text-[#D4AF5A] shrink-0" />
+                <span className="truncate">{settings.announcement_text}</span>
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0">
               {whatsappConfirmed ? (
                 <a
                   href={whatsappContactUrl}
@@ -77,23 +85,44 @@ export function StorefrontLayout() {
                   rel="noopener noreferrer"
                   className="hidden sm:inline-flex items-center gap-1.5 text-[#E8BE62] hover:text-white transition-colors whitespace-nowrap"
                 >
-                  <MessageCircle className="w-3.5 h-3.5" />
-                  WhatsApp Concierge
+                  <Headphones className="w-3.5 h-3.5" />
+                  <span>Need Help? WhatsApp Concierge</span>
                 </a>
               ) : (
                 <Link
                   to="/contact"
                   className="hidden sm:inline-flex items-center gap-1.5 text-[#E8BE62] hover:text-white transition-colors whitespace-nowrap"
                 >
-                  <MessageCircle className="w-3.5 h-3.5" />
-                  Client Support
+                  <Headphones className="w-3.5 h-3.5" />
+                  <span>Client Concierge</span>
                 </Link>
               )}
+
+              {socialItems.length > 0 && (
+                <div className="hidden lg:flex items-center gap-2 pl-2 border-l border-white/15">
+                  {socialItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <a
+                        key={item.label}
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={item.label}
+                        className="text-neutral-300 hover:text-[#E8BE62] transition-colors"
+                      >
+                        <Icon className="w-3.5 h-3.5" />
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
+
               <button
                 type="button"
                 onClick={() => setBannerDismissed(true)}
                 aria-label="Dismiss announcement"
-                className="text-neutral-400 hover:text-white"
+                className="text-neutral-400 hover:text-white p-0.5"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -104,13 +133,13 @@ export function StorefrontLayout() {
 
       {/* Main Header */}
       <header className="sticky top-0 z-30 bg-[#090909]/95 backdrop-blur-md text-white border-b border-[#D4AF5A]/25">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between gap-8">
-          <div className="flex items-center gap-3 shrink-0">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 sm:h-20 flex items-center justify-between gap-2 sm:gap-6">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <button
               type="button"
               onClick={() => setMobileMenuOpen(true)}
               aria-label="Open navigation menu"
-              className="lg:hidden p-2 -ml-2 text-neutral-200 hover:text-[#D4AF5A]"
+              className="lg:hidden p-2 -ml-1 text-neutral-200 hover:text-[#D4AF5A]"
             >
               <Menu className="w-6 h-6" />
             </button>
@@ -119,84 +148,136 @@ export function StorefrontLayout() {
             </Link>
           </div>
 
-          <nav className="hidden lg:flex items-center gap-7 text-sm font-medium">
-            {navLinks.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.to === '/'}
-                className={({ isActive }) =>
-                  `whitespace-nowrap shrink-0 py-1 border-b transition-colors tracking-wide ${
-                    isActive
-                      ? 'text-[#E8BE62] border-[#E8BE62]'
-                      : 'text-neutral-200 border-transparent hover:text-white hover:border-[#D4AF5A]/50'
-                  }`
-                }
-              >
-                {item.label}
-              </NavLink>
-            ))}
+          {/* Desktop Navigation with Sleek Gold Underline on Active Link */}
+          <nav className="hidden lg:flex items-center gap-6 xl:gap-8 text-sm font-medium">
+            {navLinks.map((item) =>
+              item.hasCategories ? (
+                <div
+                  key={item.to}
+                  className="relative"
+                  onMouseEnter={() => setShopDropdownOpen(true)}
+                  onMouseLeave={() => setShopDropdownOpen(false)}
+                >
+                  <NavLink
+                    to={item.to}
+                    className={({ isActive }) =>
+                      `inline-flex items-center gap-1 whitespace-nowrap shrink-0 py-1.5 border-b-2 transition-colors tracking-wide ${
+                        isActive
+                          ? 'border-[#D4AF5A] text-[#E8BE62] font-semibold'
+                          : 'border-transparent text-neutral-200 hover:text-[#E8BE62]'
+                      }`
+                    }
+                  >
+                    {item.label}
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </NavLink>
+
+                  {shopDropdownOpen && (
+                    <div className="absolute left-0 top-full pt-2 w-56 z-40">
+                      <div className="bg-[#121212] border border-[#D4AF5A]/30 rounded-xl shadow-2xl p-2 space-y-0.5">
+                        <Link
+                          to="/shop"
+                          onClick={() => setShopDropdownOpen(false)}
+                          className="block px-3 py-2 rounded-lg text-xs font-semibold text-[#E8BE62] hover:bg-white/5"
+                        >
+                          All Luxury Pieces
+                        </Link>
+                        {categories.map((cat) => (
+                          <Link
+                            key={cat.id}
+                            to={`/shop?category=${encodeURIComponent(cat.slug)}`}
+                            onClick={() => setShopDropdownOpen(false)}
+                            className="block px-3 py-2 rounded-lg text-xs text-neutral-200 hover:bg-white/5 hover:text-[#E8BE62]"
+                          >
+                            {cat.name}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.to === '/'}
+                  className={({ isActive }) =>
+                    `whitespace-nowrap shrink-0 py-1.5 border-b-2 transition-colors tracking-wide ${
+                      isActive
+                        ? 'border-[#D4AF5A] text-[#E8BE62] font-semibold'
+                        : 'border-transparent text-neutral-200 hover:text-[#E8BE62]'
+                    }`
+                  }
+                >
+                  {item.label}
+                </NavLink>
+              )
+            )}
           </nav>
 
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {/* Right Controls: Pill Search, Admin Access, Shopping Bag */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+            <form
+              onSubmit={handleSearchSubmit}
+              className="hidden md:flex items-center bg-white/5 border border-white/15 focus-within:border-[#D4AF5A] rounded-full px-3.5 py-1.5 w-44 xl:w-56 transition-colors"
+            >
+              <input
+                type="search"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search products..."
+                className="w-full bg-transparent text-xs text-white placeholder:text-neutral-400 focus:outline-none"
+              />
+              <button
+                type="submit"
+                aria-label="Submit search"
+                className="text-neutral-300 hover:text-[#E8BE62] ml-1.5 shrink-0"
+              >
+                <Search className="w-4 h-4" />
+              </button>
+            </form>
+
             <button
               type="button"
-              onClick={() => setSearchOpen((v) => !v)}
+              onClick={() => setMobileSearchOpen((v) => !v)}
               aria-label="Search products"
-              className="p-2.5 rounded-lg text-neutral-200 hover:text-[#E8BE62] hover:bg-white/5 transition-colors"
+              className="md:hidden p-2 rounded-lg text-neutral-200 hover:text-[#E8BE62] hover:bg-white/5 transition-colors"
             >
               <Search className="w-5 h-5" />
             </button>
-            <Link
-              to="/admin"
-              aria-label="Administrator Portal"
-              title="Store Admin"
-              className="p-2.5 rounded-lg text-neutral-200 hover:text-[#E8BE62] hover:bg-white/5 transition-colors"
-            >
-              <UserCheck className="w-5 h-5" />
-            </Link>
+
             <button
               type="button"
               onClick={openDrawer}
               aria-label="Open shopping bag"
-              className="relative inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[#D4AF5A] text-[#090909] text-xs font-semibold hover:bg-[#E8BE62] transition-colors whitespace-nowrap shrink-0"
+              className="relative inline-flex items-center justify-center p-2 sm:p-2.5 rounded-full text-white hover:text-[#E8BE62] hover:bg-white/5 transition-colors shrink-0"
             >
-              <ShoppingBag className="w-4 h-4" />
-              <span className="hidden sm:inline">Bag</span>
-              <span className="tabular-nums">({totalItems})</span>
+              <ShoppingCart className="w-5 h-5" />
+              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#DC2626] text-white text-[10px] font-bold flex items-center justify-center tabular-nums">
+                {totalItems}
+              </span>
             </button>
           </div>
         </div>
 
-        {/* Expandable Search Bar */}
-        {searchOpen && (
-          <div className="border-t border-white/10 bg-[#090909] px-4 sm:px-6 py-3.5">
-            <form
-              onSubmit={handleSearchSubmit}
-              className="max-w-3xl mx-auto flex items-center gap-3"
-            >
+        {/* Expandable Mobile Search Bar */}
+        {mobileSearchOpen && (
+          <div className="md:hidden border-t border-white/10 bg-[#090909] px-4 py-3">
+            <form onSubmit={handleSearchSubmit} className="flex items-center gap-2.5">
               <Search className="w-4 h-4 text-[#D4AF5A] shrink-0" />
               <input
                 type="search"
                 autoFocus
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search dresses, blazers, handbags, footwear, jewellery..."
+                placeholder="Search dresses, handbags, footwear..."
                 className="flex-1 bg-transparent text-sm text-white placeholder:text-neutral-400 focus:outline-none"
               />
               <button
                 type="submit"
-                className="px-4 py-1.5 rounded-md bg-[#D4AF5A] text-[#090909] text-xs font-semibold hover:bg-[#E8BE62] transition-colors"
+                className="px-3.5 py-1.5 rounded-full bg-[#D4AF5A] text-[#090909] text-xs font-semibold"
               >
-                Search
-              </button>
-              <button
-                type="button"
-                onClick={() => setSearchOpen(false)}
-                aria-label="Close search"
-                className="p-1.5 text-neutral-400 hover:text-white"
-              >
-                <X className="w-4 h-4" />
+                Go
               </button>
             </form>
           </div>
@@ -211,8 +292,8 @@ export function StorefrontLayout() {
             onClick={() => setMobileMenuOpen(false)}
             aria-hidden="true"
           />
-          <aside className="relative z-10 w-80 max-w-[85vw] bg-[#090909] text-white h-full flex flex-col p-6 border-r border-[#D4AF5A]/25">
-            <div className="flex items-center justify-between pb-5 border-b border-white/10">
+          <aside className="relative z-10 w-80 max-w-[85vw] bg-[#090909] text-white h-full flex flex-col p-5 border-r border-[#D4AF5A]/25 overflow-y-auto">
+            <div className="flex items-center justify-between pb-4 border-b border-white/10">
               <BrandLogo variant="dark" size="sm" logoUrl={settings.logo_url} />
               <button
                 type="button"
@@ -224,7 +305,10 @@ export function StorefrontLayout() {
               </button>
             </div>
 
-            <form onSubmit={handleSearchSubmit} className="mt-5 flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2">
+            <form
+              onSubmit={handleSearchSubmit}
+              className="mt-4 flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-3.5 py-2"
+            >
               <Search className="w-4 h-4 text-[#D4AF5A]" />
               <input
                 type="search"
@@ -235,7 +319,7 @@ export function StorefrontLayout() {
               />
             </form>
 
-            <nav className="mt-6 flex flex-col gap-1">
+            <nav className="mt-5 flex flex-col gap-1">
               {navLinks.map((item) => (
                 <NavLink
                   key={item.to}
@@ -243,9 +327,9 @@ export function StorefrontLayout() {
                   end={item.to === '/'}
                   onClick={() => setMobileMenuOpen(false)}
                   className={({ isActive }) =>
-                    `px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
+                    `px-3.5 py-3 rounded-lg text-sm font-medium transition-colors ${
                       isActive
-                        ? 'bg-[#D4AF5A] text-[#090909]'
+                        ? 'bg-[#D4AF5A] text-[#090909] font-semibold'
                         : 'text-neutral-200 hover:bg-white/5'
                     }`
                   }
@@ -255,7 +339,7 @@ export function StorefrontLayout() {
               ))}
             </nav>
 
-            <div className="mt-6 pt-6 border-t border-white/10">
+            <div className="mt-6 pt-5 border-t border-white/10">
               <p className="text-[11px] uppercase tracking-[0.18em] text-[#D4AF5A] mb-3">
                 Categories
               </p>
@@ -275,12 +359,12 @@ export function StorefrontLayout() {
 
             <div className="mt-auto pt-6 border-t border-white/10">
               <Link
-                to="/admin"
+                to="/shop"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg border border-[#D4AF5A]/40 text-xs font-medium text-[#E8BE62] hover:bg-[#D4AF5A]/10"
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-lg bg-[#D4AF5A] text-[#090909] text-xs font-semibold hover:bg-[#E8BE62] transition-colors"
               >
-                <UserCheck className="w-4 h-4" />
-                Administrator Dashboard
+                <ShoppingCart className="w-4 h-4" />
+                Browse Full Boutique
               </Link>
             </div>
           </aside>
@@ -292,9 +376,9 @@ export function StorefrontLayout() {
         <Outlet />
       </main>
 
-      {/* Luxury Footer */}
-      <footer className="bg-[#090909] text-[#FAF5EE] border-t border-[#D4AF5A]/25">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-14 sm:py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+      {/* Luxury Black & Gold Footer */}
+      <footer className="bg-[#090909] text-[#FAF5EE] border-t border-[#D4AF5A]/25 pb-32 lg:pb-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 sm:py-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10">
           <div className="space-y-4">
             <BrandLogo variant="dark" size="sm" logoUrl={settings.logo_url} />
             <p className="text-sm text-neutral-300 leading-relaxed">
@@ -311,7 +395,7 @@ export function StorefrontLayout() {
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={item.label}
-                      className="w-9 h-9 rounded-full bg-white/5 border border-white/15 flex items-center justify-center text-[#E8BE62] hover:bg-[#D4AF5A] hover:text-[#090909] transition-colors"
+                      className="w-9 h-9 rounded-full bg-[#D4AF5A] text-[#090909] flex items-center justify-center hover:bg-[#E8BE62] transition-colors"
                     >
                       <Icon className="w-4 h-4" />
                     </a>
@@ -378,7 +462,7 @@ export function StorefrontLayout() {
                 <p>
                   <a
                     href={`mailto:${settings.business_email}`}
-                    className="text-[#E8BE62] hover:underline"
+                    className="text-[#E8BE62] hover:underline break-all"
                   >
                     {settings.business_email}
                   </a>
@@ -390,8 +474,19 @@ export function StorefrontLayout() {
         </div>
 
         <div className="border-t border-white/10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-neutral-400">
-            <p>{settings.copyright_text}</p>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-neutral-400 text-center sm:text-left">
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
+              <p>{settings.copyright_text}</p>
+              <Link
+                to="/admin"
+                aria-label="Admin Portal"
+                title="Admin"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-[#D4AF5A]/25 text-[11px] text-neutral-400 hover:text-[#E8BE62] hover:border-[#D4AF5A]/60 transition-colors"
+              >
+                <Lock className="w-3 h-3 text-[#D4AF5A]" />
+                <span>Admin</span>
+              </Link>
+            </div>
             <p className="text-[11px] text-neutral-500">
               Developed by Emmanuel Kenny | StaySafelite
             </p>
@@ -401,6 +496,7 @@ export function StorefrontLayout() {
 
       <CartDrawer />
       <FloatingWhatsAppButton />
+      <MobileBottomNav />
     </div>
   );
 }

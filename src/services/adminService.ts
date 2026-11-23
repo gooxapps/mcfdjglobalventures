@@ -1,4 +1,17 @@
-import { getSupabaseClient } from '@/src/lib/supabase';
+import { getSupabaseClient, isSupabaseConfigured, supabase } from '@/src/lib/supabase';
+import {
+  getPreviewActivityLogs,
+  getPreviewAdminCategories,
+  getPreviewAdminCustomers,
+  getPreviewAdminOrders,
+  getPreviewAdminProducts,
+  getPreviewAdminUsers,
+  getPreviewBanners,
+  getPreviewDailySeries,
+  getPreviewHomepageSections,
+  getPreviewMediaLibrary,
+  getPreviewTestimonials,
+} from '@/src/lib/adminPreviewData';
 import type {
   ActivityLog,
   AdminUserRecord,
@@ -14,6 +27,13 @@ import type {
   SiteSettings,
   Testimonial,
 } from '@/src/types/store';
+
+function requireLiveSupabaseClient() {
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error('Preview Mode: Connect your Supabase database to save live changes.');
+  }
+  return getSupabaseClient();
+}
 
 export async function logAdminActivity(params: {
   action: string;
@@ -100,7 +120,7 @@ export async function uploadImageToStorage(
     throw new Error('File exceeds the 10MB size limit.');
   }
 
-  const supabase = getSupabaseClient();
+  const supabaseClient = requireLiveSupabaseClient();
   const compressed = await compressImageIfNeeded(file);
   const ext = file.name.split('.').pop()?.toLowerCase() || 'webp';
   const safeBase = file.name
@@ -110,7 +130,7 @@ export async function uploadImageToStorage(
     .slice(0, 48);
   const storagePath = `${folder}/${Date.now()}-${safeBase}.${ext}`;
 
-  const { error: uploadError } = await supabase.storage
+  const { error: uploadError } = await supabaseClient.storage
     .from(bucket)
     .upload(storagePath, compressed, {
       contentType: compressed.type || file.type,
@@ -123,13 +143,13 @@ export async function uploadImageToStorage(
 
   const {
     data: { publicUrl },
-  } = supabase.storage.from(bucket).getPublicUrl(storagePath);
+  } = supabaseClient.storage.from(bucket).getPublicUrl(storagePath);
 
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await supabaseClient.auth.getUser();
 
-  const { data: asset, error: dbError } = await supabase
+  const { data: asset, error: dbError } = await supabaseClient
     .from('media_library')
     .insert({
       file_name: file.name,
@@ -183,21 +203,53 @@ export async function fetchDashboardMetrics(
   endDateIso: string,
   currencySymbol = 'CAD $'
 ): Promise<DashboardMetrics> {
-  const supabase = getSupabaseClient();
+  if (!isSupabaseConfigured || !supabase) {
+    const previewProds = getPreviewAdminProducts();
+    const previewOrders = getPreviewAdminOrders();
+    const previewPaid = previewOrders
+      .filter((o) => o.payment_status === 'Paid' || o.payment_status === 'Partially Paid')
+      .reduce((sum, o) => sum + Number(o.total || 0), 0);
+
+    return {
+      totalProducts: previewProds.length,
+      activeProducts: previewProds.filter((p) => p.is_published).length,
+      outOfStockProducts: 0,
+      totalOrders: previewOrders.length,
+      pendingOrders: previewOrders.filter(
+        (o) => o.order_status === 'New' || o.order_status === 'Pending Confirmation'
+      ).length,
+      confirmedOrders: previewOrders.filter(
+        (o) =>
+          o.order_status === 'Confirmed' ||
+          o.order_status === 'Processing' ||
+          o.order_status === 'Shipped'
+      ).length,
+      completedOrders: previewOrders.filter((o) => o.order_status === 'Delivered').length,
+      whatsappInitiations: previewOrders.length,
+      totalCustomers: getPreviewAdminCustomers().length,
+      confirmedSalesTotal: previewPaid,
+      currencySymbol,
+      recentOrders: previewOrders,
+      topProducts: previewProds.slice(0, 5),
+      dailySeries: getPreviewDailySeries(),
+    };
+  }
+
+  const client = getSupabaseClient();
 
   const [productsRes, ordersRes, customersCountRes] = await Promise.all([
-    supabase
+    client
       .from('products')
       .select('*, category:categories(*)')
       .eq('is_archived', false)
       .order('sales_count', { ascending: false }),
-    supabase
+    client
       .from('orders')
       .select('*, items:order_items(*)')
       .gte('created_at', startDateIso)
       .lte('created_at', endDateIso)
       .order('created_at', { ascending: false }),
-    supabase.from('customers').select('id', { count: 'exact', head: true }),
+    client.from('customers').select('id', { count: 'exact', head: true }),
   ]);
 
   const products = (productsRes.data as Product[]) || [];
@@ -274,13 +326,16 @@ export async function fetchDashboardMetrics(
 // ============================================================================
 
 export async function fetchAdminProducts(): Promise<Product[]> {
-  const supabase = getSupabaseClient();
+  if (!isSupabaseConfigured || !supabase) {
+    return getPreviewAdminProducts();
+  }
+  const client = getSupabaseClient();
   const [prodRes, finRes] = await Promise.all([
-    supabase
+    client
       .from('products')
       .select('*, category:categories(*), images:product_images(*), variants:product_variants(*)')
       .order('created_at', { ascending: false }),
-    supabase.from('product_financials').select('*'),
+    client.from('product_financials').select('*'),
   ]);
 
   if (prodRes.error) throw new Error(prodRes.error.message);
@@ -339,7 +394,7 @@ export interface ProductSaveInput {
 }
 
 export async function saveAdminProduct(input: ProductSaveInput): Promise<Product> {
-  const supabase = getSupabaseClient();
+  const supabase = requireLiveSupabaseClient();
   const isEditing = Boolean(input.id);
 
   const productPayload = {
@@ -438,7 +493,7 @@ export async function bulkUpdateProducts(
   updates: Partial<Pick<Product, 'is_published' | 'is_archived' | 'category_id'>>,
   description: string
 ) {
-  const supabase = getSupabaseClient();
+  const supabase = requireLiveSupabaseClient();
   const { error } = await supabase.from('products').update(updates).in('id', ids);
   if (error) throw new Error(error.message);
   await logAdminActivity({
@@ -449,7 +504,7 @@ export async function bulkUpdateProducts(
 }
 
 export async function deleteProducts(ids: string[]) {
-  const supabase = getSupabaseClient();
+  const supabase = requireLiveSupabaseClient();
   const { error } = await supabase.from('products').delete().in('id', ids);
   if (error) throw new Error(error.message);
   await logAdminActivity({
@@ -464,8 +519,11 @@ export async function deleteProducts(ids: string[]) {
 // ============================================================================
 
 export async function fetchAdminCategories(): Promise<Category[]> {
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase
+  if (!isSupabaseConfigured || !supabase) {
+    return getPreviewAdminCategories();
+  }
+  const client = getSupabaseClient();
+  const { data, error } = await client
     .from('categories')
     .select('*')
     .order('sort_order', { ascending: true });
@@ -476,7 +534,7 @@ export async function fetchAdminCategories(): Promise<Category[]> {
 export async function saveAdminCategory(
   payload: Partial<Category> & { name: string; slug: string }
 ): Promise<Category> {
-  const supabase = getSupabaseClient();
+  const supabase = requireLiveSupabaseClient();
   const isEditing = Boolean(payload.id);
   const clean = {
     name: payload.name.trim(),
@@ -506,7 +564,7 @@ export async function saveAdminCategory(
 }
 
 export async function deleteAdminCategory(id: string): Promise<void> {
-  const supabase = getSupabaseClient();
+  const supabase = requireLiveSupabaseClient();
   const { count } = await supabase
     .from('products')
     .select('id', { count: 'exact', head: true })
@@ -534,8 +592,11 @@ export async function deleteAdminCategory(id: string): Promise<void> {
 // ============================================================================
 
 export async function fetchAdminOrders(): Promise<Order[]> {
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase
+  if (!isSupabaseConfigured || !supabase) {
+    return getPreviewAdminOrders();
+  }
+  const client = getSupabaseClient();
+  const { data, error } = await client
     .from('orders')
     .select('*, items:order_items(*)')
     .order('created_at', { ascending: false });
@@ -560,7 +621,7 @@ export async function updateAdminOrder(
   },
   orderReference: string
 ): Promise<void> {
-  const supabase = getSupabaseClient();
+  const supabase = requireLiveSupabaseClient();
   const { data: currentOrder } = await supabase
     .from('orders')
     .select('subtotal, tax_amount, delivery_charge, payment_status')
@@ -611,8 +672,11 @@ export async function updateAdminOrder(
 }
 
 export async function fetchAdminCustomers(): Promise<Customer[]> {
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase
+  if (!isSupabaseConfigured || !supabase) {
+    return getPreviewAdminCustomers();
+  }
+  const client = getSupabaseClient();
+  const { data, error } = await client
     .from('customers')
     .select('*')
     .order('last_order_at', { ascending: false, nullsFirst: false });
@@ -624,7 +688,7 @@ export async function updateAdminCustomer(
   id: string,
   updates: Partial<Pick<Customer, 'full_name' | 'phone' | 'email' | 'default_address' | 'notes'>>
 ): Promise<void> {
-  const supabase = getSupabaseClient();
+  const supabase = requireLiveSupabaseClient();
   const { error } = await supabase.from('customers').update(updates).eq('id', id);
   if (error) throw new Error(error.message);
   await logAdminActivity({
@@ -640,7 +704,7 @@ export async function updateAdminCustomer(
 // ============================================================================
 
 export async function updateSiteSettings(updates: Partial<SiteSettings>): Promise<SiteSettings> {
-  const supabase = getSupabaseClient();
+  const supabase = requireLiveSupabaseClient();
   const { data, error } = await supabase
     .from('site_settings')
     .update(updates)
@@ -660,8 +724,11 @@ export async function updateSiteSettings(updates: Partial<SiteSettings>): Promis
 }
 
 export async function fetchAdminHomepageSections(): Promise<HomepageSection[]> {
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase
+  if (!isSupabaseConfigured || !supabase) {
+    return getPreviewHomepageSections();
+  }
+  const client = getSupabaseClient();
+  const { data, error } = await client
     .from('homepage_sections')
     .select('*')
     .order('sort_order', { ascending: true });
@@ -670,7 +737,7 @@ export async function fetchAdminHomepageSections(): Promise<HomepageSection[]> {
 }
 
 export async function saveHomepageSections(sections: HomepageSection[]): Promise<void> {
-  const supabase = getSupabaseClient();
+  const supabase = requireLiveSupabaseClient();
   for (const s of sections) {
     const { error } = await supabase
       .from('homepage_sections')
@@ -691,8 +758,11 @@ export async function saveHomepageSections(sections: HomepageSection[]): Promise
 }
 
 export async function fetchAdminTestimonials(): Promise<Testimonial[]> {
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase
+  if (!isSupabaseConfigured || !supabase) {
+    return getPreviewTestimonials();
+  }
+  const client = getSupabaseClient();
+  const { data, error } = await client
     .from('testimonials')
     .select('*')
     .order('sort_order', { ascending: true });
@@ -703,7 +773,7 @@ export async function fetchAdminTestimonials(): Promise<Testimonial[]> {
 export async function saveTestimonial(
   item: Partial<Testimonial> & { customer_name: string; quote: string }
 ): Promise<void> {
-  const supabase = getSupabaseClient();
+  const supabase = requireLiveSupabaseClient();
   const clean = {
     customer_name: item.customer_name.trim(),
     customer_role: item.customer_role?.trim() || 'Verified Client',
@@ -720,14 +790,17 @@ export async function saveTestimonial(
 }
 
 export async function deleteTestimonial(id: string): Promise<void> {
-  const supabase = getSupabaseClient();
+  const supabase = requireLiveSupabaseClient();
   const { error } = await supabase.from('testimonials').delete().eq('id', id);
   if (error) throw new Error(error.message);
 }
 
 export async function fetchAdminBanners(): Promise<Banner[]> {
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase
+  if (!isSupabaseConfigured || !supabase) {
+    return getPreviewBanners();
+  }
+  const client = getSupabaseClient();
+  const { data, error } = await client
     .from('banners')
     .select('*')
     .order('sort_order', { ascending: true });
@@ -738,7 +811,7 @@ export async function fetchAdminBanners(): Promise<Banner[]> {
 export async function saveBanner(
   banner: Partial<Banner> & { title: string; image_url: string }
 ): Promise<void> {
-  const supabase = getSupabaseClient();
+  const supabase = requireLiveSupabaseClient();
   const clean = {
     title: banner.title.trim(),
     subtitle: banner.subtitle?.trim() || '',
@@ -756,14 +829,17 @@ export async function saveBanner(
 }
 
 export async function deleteBanner(id: string): Promise<void> {
-  const supabase = getSupabaseClient();
+  const supabase = requireLiveSupabaseClient();
   const { error } = await supabase.from('banners').delete().eq('id', id);
   if (error) throw new Error(error.message);
 }
 
 export async function fetchMediaLibrary(): Promise<MediaAsset[]> {
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase
+  if (!isSupabaseConfigured || !supabase) {
+    return getPreviewMediaLibrary();
+  }
+  const client = getSupabaseClient();
+  const { data, error } = await client
     .from('media_library')
     .select('*')
     .order('created_at', { ascending: false });
@@ -772,7 +848,7 @@ export async function fetchMediaLibrary(): Promise<MediaAsset[]> {
 }
 
 export async function renameMediaAsset(id: string, fileName: string, altText: string): Promise<void> {
-  const supabase = getSupabaseClient();
+  const supabase = requireLiveSupabaseClient();
   const { error } = await supabase
     .from('media_library')
     .update({ file_name: fileName.trim(), alt_text: altText.trim() })
@@ -781,15 +857,18 @@ export async function renameMediaAsset(id: string, fileName: string, altText: st
 }
 
 export async function deleteMediaAsset(asset: MediaAsset): Promise<void> {
-  const supabase = getSupabaseClient();
+  const supabase = requireLiveSupabaseClient();
   await supabase.storage.from(asset.bucket_name).remove([asset.storage_path]);
   const { error } = await supabase.from('media_library').delete().eq('id', asset.id);
   if (error) throw new Error(error.message);
 }
 
 export async function fetchActivityLogs(limit = 100): Promise<ActivityLog[]> {
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase
+  if (!isSupabaseConfigured || !supabase) {
+    return getPreviewActivityLogs();
+  }
+  const client = getSupabaseClient();
+  const { data, error } = await client
     .from('activity_logs')
     .select('*')
     .order('created_at', { ascending: false })
@@ -799,14 +878,17 @@ export async function fetchActivityLogs(limit = 100): Promise<ActivityLog[]> {
 }
 
 export async function fetchAdminUsers(): Promise<AdminUserRecord[]> {
-  const supabase = getSupabaseClient();
-  const { data: roles, error } = await supabase
+  if (!isSupabaseConfigured || !supabase) {
+    return getPreviewAdminUsers();
+  }
+  const client = getSupabaseClient();
+  const { data: roles, error } = await client
     .from('admin_roles')
     .select('*')
     .order('created_at', { ascending: false });
   if (error) throw new Error(error.message);
 
-  const { data: profiles } = await supabase.from('profiles').select('*');
+  const { data: profiles } = await client.from('profiles').select('*');
   const profileMap = new Map((profiles || []).map((p) => [p.id, p]));
 
   return (roles || []).map((r) => ({

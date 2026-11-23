@@ -8,6 +8,7 @@ import {
   DEFAULT_HOMEPAGE_SECTIONS,
   DEFAULT_SITE_SETTINGS,
 } from '@/src/lib/defaults';
+import { getPreviewAdminProducts } from '@/src/lib/adminPreviewData';
 import type {
   Banner,
   Category,
@@ -115,7 +116,39 @@ export async function fetchPublishedProducts(
   params: ProductQueryParams = {}
 ): Promise<Product[]> {
   await ensureSupabaseInitialized();
-  if (!isSupabaseConfigured || !supabase) return [];
+  if (!isSupabaseConfigured || !supabase) {
+    let items = getPreviewAdminProducts();
+    if (params.categorySlug) {
+      items = items.filter((p) => p.category?.slug === params.categorySlug);
+    }
+    if (params.featuredOnly) items = items.filter((p) => p.is_featured);
+    if (params.newArrivalsOnly) items = items.filter((p) => p.is_new_arrival);
+    if (params.bestSellersOnly) items = items.filter((p) => p.is_best_seller);
+    if (params.onSaleOnly) items = items.filter((p) => p.is_on_sale);
+    if (params.search && params.search.trim()) {
+      const q = params.search.trim().toLowerCase();
+      items = items.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          p.short_description.toLowerCase().includes(q) ||
+          p.sku.toLowerCase().includes(q)
+      );
+    }
+    if (typeof params.minPrice === 'number' && !Number.isNaN(params.minPrice)) {
+      items = items.filter((p) => p.regular_price >= params.minPrice!);
+    }
+    if (typeof params.maxPrice === 'number' && !Number.isNaN(params.maxPrice)) {
+      items = items.filter((p) => p.regular_price <= params.maxPrice!);
+    }
+    if (params.sortBy === 'price_asc') {
+      items = [...items].sort((a, b) => a.regular_price - b.regular_price);
+    } else if (params.sortBy === 'price_desc') {
+      items = [...items].sort((a, b) => b.regular_price - a.regular_price);
+    } else if (params.sortBy === 'popular') {
+      items = [...items].sort((a, b) => b.sales_count - a.sales_count);
+    }
+    return params.limit ? items.slice(0, params.limit) : items;
+  }
 
   let categoryIdFilter: string | null = null;
   if (params.categorySlug) {
@@ -193,7 +226,10 @@ export async function fetchPublishedProducts(
 
 export async function fetchProductBySlug(slug: string): Promise<Product | null> {
   await ensureSupabaseInitialized();
-  if (!isSupabaseConfigured || !supabase || !slug) return null;
+  if (!slug) return null;
+  if (!isSupabaseConfigured || !supabase) {
+    return getPreviewAdminProducts().find((p) => p.slug === slug) ?? null;
+  }
 
   const { data, error } = await supabase
     .from('products')
@@ -227,7 +263,11 @@ export async function fetchRelatedProducts(
   limit = 4
 ): Promise<Product[]> {
   await ensureSupabaseInitialized();
-  if (!isSupabaseConfigured || !supabase) return [];
+  if (!isSupabaseConfigured || !supabase) {
+    const all = getPreviewAdminProducts().filter((p) => p.id !== productId);
+    const sameCat = categoryId ? all.filter((p) => p.category_id === categoryId) : all;
+    return (sameCat.length >= limit ? sameCat : all).slice(0, limit);
+  }
 
   let query = supabase
     .from('products')

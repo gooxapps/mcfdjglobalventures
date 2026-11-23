@@ -27,6 +27,7 @@ import {
   type ProductSaveInput,
 } from '@/src/services/adminService';
 import type { Category, Product, ProductColourOption } from '@/src/types/store';
+import { STARTER_LUXURY_PRODUCTS } from '@/src/lib/starterCatalog';
 import { downloadCsv, parseCsvText } from '@/src/utils/csv';
 import { formatPrice, slugify } from '@/src/utils/format';
 import { SafeImage } from '@/src/components/SafeImage';
@@ -77,6 +78,7 @@ export function AdminProductsPage() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [seedingStarter, setSeedingStarter] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [form, setForm] = useState<ProductSaveInput>(EMPTY_FORM);
 
@@ -451,6 +453,66 @@ export function AdminProductsPage() {
     }
   };
 
+  const handleSeedStarterProducts = async () => {
+    setSeedingStarter(true);
+    try {
+      const existingSlugs = new Set(products.map((p) => p.slug));
+      let addedCount = 0;
+
+      for (const item of STARTER_LUXURY_PRODUCTS) {
+        if (existingSlugs.has(item.slug)) continue;
+        const matchedCat = categories.find((c) => c.slug === item.categorySlug) || categories[0];
+        await saveAdminProduct({
+          name: item.name,
+          slug: item.slug,
+          short_description: item.short_description,
+          description: item.description,
+          category_id: matchedCat?.id ?? null,
+          subcategory: item.subcategory,
+          sku: item.sku,
+          regular_price: item.regular_price,
+          discounted_price: item.discounted_price,
+          cost_price: null,
+          currency: settings.default_currency || 'CAD',
+          main_image_url: item.main_image_url,
+          stock_quantity: item.stock_quantity,
+          tags: item.tags,
+          available_sizes: item.available_sizes,
+          available_colours: item.available_colours,
+          is_featured: item.is_featured,
+          is_best_seller: item.is_best_seller,
+          is_new_arrival: item.is_new_arrival,
+          is_on_sale: item.is_on_sale,
+          is_published: true,
+          is_archived: false,
+          seo_title: `${item.name} | MCFD J GLOBAL VENTURES`,
+          seo_description: item.short_description,
+          images: [
+            {
+              url: item.main_image_url,
+              alt_text: item.name,
+              sort_order: 0,
+              is_main: true,
+            },
+          ],
+          variants: [],
+        });
+        addedCount++;
+      }
+
+      if (addedCount === 0) {
+        showToast('All 10 starter luxury pieces are already in your Supabase catalogue.');
+      } else {
+        showToast(`Published ${addedCount} curated luxury pieces to Supabase.`);
+      }
+      await loadData();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Unable to seed starter products.', 'error');
+    } finally {
+      setSeedingStarter(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -464,6 +526,21 @@ export function AdminProductsPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
+          {products.length < 10 && (
+            <button
+              type="button"
+              disabled={seedingStarter}
+              onClick={handleSeedStarterProducts}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-[#D4AF5A] bg-[#FAF5EE] text-[#090909] text-xs font-semibold hover:bg-[#F1E8DC] disabled:opacity-60"
+            >
+              {seedingStarter ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Star className="w-3.5 h-3.5 text-[#B89038]" />
+              )}
+              {seedingStarter ? 'Publishing...' : 'Add 10 Starter Pieces'}
+            </button>
+          )}
           <input
             ref={csvFileRef}
             type="file"

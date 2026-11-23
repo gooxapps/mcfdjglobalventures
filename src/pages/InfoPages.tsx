@@ -28,7 +28,7 @@ export function CollectionsPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-6 sm:py-12 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-7">
         {categories.map((cat) => (
           <Link
             key={cat.id}
@@ -42,17 +42,17 @@ export function CollectionsPage() {
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
             </div>
-            <div className="p-6 flex-1 flex flex-col justify-between">
+            <div className="p-3 sm:p-6 flex-1 flex flex-col justify-between">
               <div>
-                <h2 className="font-serif text-2xl font-semibold text-[#090909] group-hover:text-[#9A7422] transition-colors">
+                <h2 className="font-serif text-base sm:text-2xl font-semibold text-[#090909] group-hover:text-[#9A7422] transition-colors">
                   {cat.name}
                 </h2>
-                <p className="text-sm text-neutral-600 mt-2 leading-relaxed">
+                <p className="text-[11px] sm:text-sm text-neutral-600 mt-1 sm:mt-2 leading-relaxed line-clamp-2 sm:line-clamp-none">
                   {cat.description}
                 </p>
               </div>
-              <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#090909] mt-5">
-                Explore Category
+              <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-[#090909] mt-3 sm:mt-5">
+                Explore
                 <ArrowRight className="w-3.5 h-3.5 text-[#D4AF5A]" />
               </span>
             </div>

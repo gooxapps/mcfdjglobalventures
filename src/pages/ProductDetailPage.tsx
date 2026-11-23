@@ -470,7 +470,7 @@ export function ProductDetailPage() {
             <h2 className="font-serif text-3xl font-semibold text-[#090909] mb-8">
               Complementary Pieces
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-6">
               {related.map((item) => (
                 <ProductCard key={item.id} product={item} />
               ))}

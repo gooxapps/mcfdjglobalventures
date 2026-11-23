@@ -96,35 +96,35 @@ export function ShopPage() {
       />
 
       <div className="bg-[#090909] text-white border-b border-[#D4AF5A]/25">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
-          <p className="text-xs uppercase tracking-[0.24em] text-[#E8BE62] mb-2">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
+          <p className="text-[10px] sm:text-xs uppercase tracking-[0.24em] text-[#E8BE62] mb-1 sm:mb-2">
             MCFD J GLOBAL VENTURES
           </p>
-          <h1 className="font-serif text-4xl sm:text-5xl font-semibold">
+          <h1 className="font-serif text-2xl sm:text-5xl font-semibold">
             The Boutique Catalogue
           </h1>
-          <p className="text-sm text-neutral-300 mt-2 max-w-2xl">
-            Filter by collection, price, or seasonal edit. Add multiple items to your shopping bag and coordinate directly via our WhatsApp concierge.
+          <p className="text-xs sm:text-sm text-neutral-300 mt-1.5 max-w-2xl">
+            Filter by collection, price, or seasonal edit. Add multiple items to your bag and order directly via WhatsApp.
           </p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-5 sm:py-10">
         {/* Filter Toolbar */}
-        <div className="bg-white border border-[#E7DEC9] rounded-xl p-5 mb-8 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-            <div className="md:col-span-4 relative">
-              <Search className="w-4 h-4 text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+        <div className="bg-white border border-[#E7DEC9] rounded-xl p-3.5 sm:p-5 mb-5 sm:mb-8 space-y-3 sm:space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-12 gap-2.5 sm:gap-4 items-center">
+            <div className="col-span-2 md:col-span-4 relative">
+              <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by product name or SKU..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#E2D6C1] bg-[#FAF5EE] text-sm focus:outline-none focus:border-[#090909]"
+                className="w-full pl-9 pr-3 py-2 sm:py-2.5 rounded-lg border border-[#E2D6C1] bg-[#FAF5EE] text-xs sm:text-sm focus:outline-none focus:border-[#090909]"
               />
             </div>
 
-            <div className="md:col-span-3">
+            <div className="col-span-1 md:col-span-3">
               <select
                 aria-label="Filter by category"
                 value={selectedCategory}
@@ -134,7 +134,7 @@ export function ShopPage() {
                   if (val) setSearchParams({ category: val });
                   else setSearchParams({});
                 }}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-[#E2D6C1] bg-[#FAF5EE] text-sm focus:outline-none focus:border-[#090909]"
+                className="w-full px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-lg border border-[#E2D6C1] bg-[#FAF5EE] text-xs sm:text-sm focus:outline-none focus:border-[#090909]"
               >
                 <option value="">All Categories</option>
                 {categories.map((c) => (
@@ -145,27 +145,7 @@ export function ShopPage() {
               </select>
             </div>
 
-            <div className="md:col-span-3 flex items-center gap-2">
-              <input
-                type="number"
-                min="0"
-                value={minPrice}
-                onChange={(e) => setMinPrice(e.target.value)}
-                placeholder="Min $"
-                className="w-full px-3 py-2.5 rounded-lg border border-[#E2D6C1] bg-[#FAF5EE] text-sm tabular-nums"
-              />
-              <span className="text-neutral-400">–</span>
-              <input
-                type="number"
-                min="0"
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)}
-                placeholder="Max $"
-                className="w-full px-3 py-2.5 rounded-lg border border-[#E2D6C1] bg-[#FAF5EE] text-sm tabular-nums"
-              />
-            </div>
-
-            <div className="md:col-span-2">
+            <div className="col-span-1 md:col-span-2 md:order-last">
               <select
                 aria-label="Sort products"
                 value={sortBy}
@@ -174,13 +154,33 @@ export function ShopPage() {
                     e.target.value as 'newest' | 'price_asc' | 'price_desc' | 'popular'
                   )
                 }
-                className="w-full px-3.5 py-2.5 rounded-lg border border-[#E2D6C1] bg-[#FAF5EE] text-sm focus:outline-none focus:border-[#090909]"
+                className="w-full px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-lg border border-[#E2D6C1] bg-[#FAF5EE] text-xs sm:text-sm focus:outline-none focus:border-[#090909]"
               >
                 <option value="newest">Sort: Newest</option>
                 <option value="price_asc">Price: Low to High</option>
                 <option value="price_desc">Price: High to Low</option>
                 <option value="popular">Most Popular</option>
               </select>
+            </div>
+
+            <div className="col-span-2 md:col-span-3 flex items-center gap-2">
+              <input
+                type="number"
+                min="0"
+                value={minPrice}
+                onChange={(e) => setMinPrice(e.target.value)}
+                placeholder="Min $"
+                className="w-full px-3 py-2 sm:py-2.5 rounded-lg border border-[#E2D6C1] bg-[#FAF5EE] text-xs sm:text-sm tabular-nums"
+              />
+              <span className="text-neutral-400">–</span>
+              <input
+                type="number"
+                min="0"
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value)}
+                placeholder="Max $"
+                className="w-full px-3 py-2 sm:py-2.5 rounded-lg border border-[#E2D6C1] bg-[#FAF5EE] text-xs sm:text-sm tabular-nums"
+              />
             </div>
           </div>
 
@@ -243,25 +243,23 @@ export function ShopPage() {
 
         {/* Catalogue Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-6">
             {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
               <div
                 key={i}
-                className="bg-white border border-[#E7DEC9] rounded-xl h-96 animate-pulse"
+                className="bg-white border border-[#E7DEC9] rounded-xl h-56 sm:h-96 animate-pulse"
               />
             ))}
           </div>
         ) : paginatedProducts.length === 0 ? (
           <div className="bg-white border border-[#E7DEC9] rounded-xl p-12 text-center">
             <p className="font-serif text-2xl font-semibold text-[#090909] mb-2">
-              {supabaseConnected
-                ? 'No matching pieces found'
-                : 'Connect Supabase to Load Live Products'}
+              {supabaseConnected ? 'No matching pieces found' : 'Collection Catalogue Updating'}
             </p>
             <p className="text-sm text-neutral-600 max-w-md mx-auto mb-6">
               {supabaseConnected
                 ? 'Try clearing active filters or exploring another fashion category.'
-                : 'Products are fetched directly from your Supabase products table. Once configured, add products in the Admin Dashboard.'}
+                : 'Our seasonal pieces are currently being curated. Check back shortly or contact our client concierge for bespoke inquiries.'}
             </p>
             <div className="flex justify-center gap-3">
               <button
@@ -271,19 +269,17 @@ export function ShopPage() {
               >
                 Reset Filters
               </button>
-              {!supabaseConnected && (
-                <Link
-                  to="/admin"
-                  className="px-5 py-2.5 rounded-lg border border-[#090909] text-xs font-semibold"
-                >
-                  Open Admin Setup
-                </Link>
-              )}
+              <Link
+                to="/contact"
+                className="px-5 py-2.5 rounded-lg border border-[#090909] text-xs font-semibold"
+              >
+                Contact Concierge
+              </Link>
             </div>
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-6">
               {paginatedProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}

@@ -49,6 +49,9 @@ const ROLE_PERMISSIONS: Record<AdminRoleType, AdminPermission[]> = {
   ],
 };
 
+const PREVIEW_MODE_STORAGE_KEY = 'mcfdj_admin_preview_mode_v1';
+const PREVIEW_NAME_STORAGE_KEY = 'mcfdj_admin_preview_name_v1';
+
 interface AdminAuthContextValue {
   user: User | null;
   session: Session | null;
@@ -56,6 +59,8 @@ interface AdminAuthContextValue {
   fullName: string;
   loading: boolean;
   isAuthorizedAdmin: boolean;
+  isPreviewMode: boolean;
+  enterPreviewMode: (displayName?: string) => void;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
@@ -71,6 +76,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<AdminRoleType | null>(null);
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(true);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
 
   const loadAdminProfile = useCallback(async (currentUser: User | null) => {
     if (!currentUser || !supabase) {
@@ -115,9 +121,29 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       if (!mounted) return;
 
       if (!isSupabaseConfigured || !supabase) {
+        try {
+          if (sessionStorage.getItem(PREVIEW_MODE_STORAGE_KEY) === '1') {
+            setIsPreviewMode(true);
+            setRole('super_admin');
+            setFullName(
+              sessionStorage.getItem(PREVIEW_NAME_STORAGE_KEY) || 'Store Owner (Preview)'
+            );
+          }
+        } catch {
+          // Ignore storage error
+        }
         setLoading(false);
         return;
       }
+
+      // Live Supabase configured: clear any prior preview flag and enforce real auth
+      try {
+        sessionStorage.removeItem(PREVIEW_MODE_STORAGE_KEY);
+        sessionStorage.removeItem(PREVIEW_NAME_STORAGE_KEY);
+      } catch {
+        // Ignore
+      }
+      setIsPreviewMode(false);
 
       const { data } = await supabase.auth.getSession();
       if (!mounted) return;
@@ -145,6 +171,20 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       if (unsubscribe) unsubscribe();
     };
   }, [loadAdminProfile]);
+
+  const enterPreviewMode = useCallback((displayName?: string) => {
+    if (isSupabaseConfigured) return;
+    const cleanName = displayName?.trim() || 'Store Owner (Preview)';
+    try {
+      sessionStorage.setItem(PREVIEW_MODE_STORAGE_KEY, '1');
+      sessionStorage.setItem(PREVIEW_NAME_STORAGE_KEY, cleanName);
+    } catch {
+      // Ignore storage error
+    }
+    setIsPreviewMode(true);
+    setRole('super_admin');
+    setFullName(cleanName);
+  }, []);
 
   const signIn = useCallback(
     async (email: string, password: string) => {
@@ -174,11 +214,20 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const signOut = useCallback(async () => {
-    if (!supabase) return;
-    await supabase.auth.signOut();
+    try {
+      sessionStorage.removeItem(PREVIEW_MODE_STORAGE_KEY);
+      sessionStorage.removeItem(PREVIEW_NAME_STORAGE_KEY);
+    } catch {
+      // Ignore
+    }
+    setIsPreviewMode(false);
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
     setUser(null);
     setSession(null);
     setRole(null);
+    setFullName('');
   }, []);
 
   const sendPasswordReset = useCallback(async (email: string) => {
@@ -201,10 +250,11 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
 
   const can = useCallback(
     (permission: AdminPermission) => {
+      if (isPreviewMode && !isSupabaseConfigured) return true;
       if (!role) return false;
       return ROLE_PERMISSIONS[role]?.includes(permission) ?? false;
     },
-    [role]
+    [role, isPreviewMode]
   );
 
   return (
@@ -215,7 +265,9 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
         role,
         fullName,
         loading,
-        isAuthorizedAdmin: Boolean(user && role),
+        isAuthorizedAdmin: Boolean((user && role) || (isPreviewMode && !isSupabaseConfigured)),
+        isPreviewMode: Boolean(isPreviewMode && !isSupabaseConfigured),
+        enterPreviewMode,
         signIn,
         signOut,
         sendPasswordReset,

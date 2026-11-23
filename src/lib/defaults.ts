@@ -55,16 +55,16 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   seo_keywords:
     'MCFD J GLOBAL VENTURES, luxury fashion, womenswear, menswear, handbags, footwear, jewellery',
   og_image_url: LOCAL_BRAND_ASSETS.heroImage,
-  announcement_text: 'Free Worldwide Concierge Consultation · Authentic Luxury Collections',
+  announcement_text: 'Worldwide Shipping  |  Shop with Confidence',
   promo_messages: [
     'Worldwide Delivery Available',
     'Direct WhatsApp Personal Styling',
     'New Season Arrivals Now Open',
   ],
-  hero_headline: 'Fashion Redefined.',
+  hero_headline: 'Style Redefined.',
   hero_subheadline_highlight: 'Elegance Delivered.',
   hero_description:
-    'Discover curated luxury fashion, timeless silhouettes, and refined craftsmanship tailored for the modern global wardrobe.',
+    'Discover premium fashion, timeless styles and unmatched quality.',
   hero_image_url: LOCAL_BRAND_ASSETS.heroImage,
   hero_button_text: 'Shop the Collection',
   hero_button_url: '/shop',
