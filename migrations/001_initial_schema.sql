@@ -1,9 +1,8 @@
 -- ============================================================================
--- MCFD J GLOBAL VENTURES — SUPABASE POSTGRESQL SCHEMA & SECURITY MIGRATION
+-- MCFD J GLOBAL VENTURES — NEON POSTGRESQL SCHEMA MIGRATION
 -- Migration: 001_initial_schema.sql
 -- ============================================================================
 
--- Enable UUID generation
 create extension if not exists "pgcrypto";
 
 -- ============================================================================
@@ -11,8 +10,9 @@ create extension if not exists "pgcrypto";
 -- ============================================================================
 
 create table if not exists public.profiles (
-  id uuid primary key references auth.users(id) on delete cascade,
+  id uuid primary key default gen_random_uuid(),
   email text not null unique,
+  password_hash text not null default '',
   full_name text not null default '',
   avatar_url text,
   phone text,
@@ -20,49 +20,22 @@ create table if not exists public.profiles (
   updated_at timestamptz not null default now()
 );
 
+alter table public.profiles add column if not exists password_hash text not null default '';
+
 create table if not exists public.admin_roles (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null unique references auth.users(id) on delete cascade,
+  user_id uuid not null unique references public.profiles(id) on delete cascade,
   role text not null check (role in ('super_admin', 'store_manager', 'content_manager')),
   is_active boolean not null default true,
-  created_by uuid references auth.users(id) on delete set null,
+  created_by uuid references public.profiles(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
--- Security helper functions (SECURITY DEFINER to avoid recursive RLS checks)
-create or replace function public.is_admin()
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select exists (
-    select 1
-    from public.admin_roles
-    where user_id = auth.uid()
-      and is_active = true
-  );
-$$;
+create index if not exists idx_profiles_email on public.profiles(email);
+create index if not exists idx_admin_roles_user on public.admin_roles(user_id, is_active);
 
-create or replace function public.has_admin_role(allowed_roles text[])
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select exists (
-    select 1
-    from public.admin_roles
-    where user_id = auth.uid()
-      and is_active = true
-      and role = any(allowed_roles)
-  );
-$$;
-
--- Trigger to auto-update updated_at columns
+-- Trigger function to auto-update updated_at columns
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
@@ -127,7 +100,6 @@ create table if not exists public.products (
   updated_at timestamptz not null default now()
 );
 
--- Private admin-only cost price table so cost_price is never exposed to public queries
 create table if not exists public.product_financials (
   product_id uuid primary key references public.products(id) on delete cascade,
   cost_price numeric(12,2) check (cost_price is null or cost_price >= 0),
@@ -266,11 +238,11 @@ create table if not exists public.site_settings (
   seo_description text not null default 'Fashion Redefined. Elegance Delivered. Discover timeless luxury styles, designer handbags, footwear, and jewellery from MCFD J GLOBAL VENTURES.',
   seo_keywords text not null default 'MCFD J GLOBAL VENTURES, luxury fashion, womenswear, menswear, handbags, footwear, jewellery',
   og_image_url text default '',
-  announcement_text text not null default 'Free Worldwide Concierge Consultation · Authentic Luxury Collections',
+  announcement_text text not null default 'Worldwide Shipping  |  Shop with Confidence',
   promo_messages jsonb not null default '["Worldwide Delivery Available","Direct WhatsApp Personal Styling","New Season Arrivals Now Open"]'::jsonb,
-  hero_headline text not null default 'Fashion Redefined.',
+  hero_headline text not null default 'Style Redefined.',
   hero_subheadline_highlight text not null default 'Elegance Delivered.',
-  hero_description text not null default 'Discover curated luxury fashion, timeless silhouettes, and refined craftsmanship tailored for the modern global wardrobe.',
+  hero_description text not null default 'Discover premium fashion, timeless styles and unmatched quality.',
   hero_image_url text default '',
   hero_button_text text not null default 'Shop the Collection',
   hero_button_url text not null default '/shop',
@@ -335,13 +307,13 @@ create table if not exists public.media_library (
   size_bytes bigint not null default 0,
   alt_text text default '',
   folder text default 'general',
-  uploaded_by uuid references auth.users(id) on delete set null,
+  uploaded_by uuid references public.profiles(id) on delete set null,
   created_at timestamptz not null default now()
 );
 
 create table if not exists public.activity_logs (
   id uuid primary key default gen_random_uuid(),
-  admin_id uuid references auth.users(id) on delete set null,
+  admin_id uuid references public.profiles(id) on delete set null,
   admin_email text default '',
   action text not null,
   entity_type text default '',
@@ -396,7 +368,7 @@ drop trigger if exists trg_testimonials_updated on public.testimonials;
 create trigger trg_testimonials_updated before update on public.testimonials for each row execute function public.set_updated_at();
 
 -- ============================================================================
--- 7. CONTROLLED PUBLIC CHECKOUT RPC (Price-Verified Server-Side in Postgres)
+-- 7. SERVER-SIDE ORDER CALCULATION & CREATION FUNCTION
 -- ============================================================================
 
 create or replace function public.create_whatsapp_order(
@@ -409,8 +381,6 @@ create or replace function public.create_whatsapp_order(
 )
 returns jsonb
 language plpgsql
-security definer
-set search_path = public
 as $$
 declare
   v_customer_id uuid;
@@ -445,7 +415,6 @@ begin
 
   select * into v_settings from public.site_settings where id = 'default' limit 1;
 
-  -- Upsert customer by normalized phone
   insert into public.customers (full_name, phone, email, default_address, total_orders, last_order_at)
   values (trim(p_customer_name), trim(p_customer_phone), coalesce(trim(p_customer_email), ''), trim(p_delivery_address), 1, now())
   on conflict (phone) do update
@@ -565,141 +534,3 @@ begin
   );
 end;
 $$;
-
--- ============================================================================
--- 8. ROW LEVEL SECURITY (RLS) POLICIES
--- ============================================================================
-
-alter table public.profiles enable row level security;
-alter table public.admin_roles enable row level security;
-alter table public.categories enable row level security;
-alter table public.products enable row level security;
-alter table public.product_financials enable row level security;
-alter table public.product_images enable row level security;
-alter table public.product_variants enable row level security;
-alter table public.customers enable row level security;
-alter table public.orders enable row level security;
-alter table public.order_items enable row level security;
-alter table public.site_settings enable row level security;
-alter table public.homepage_sections enable row level security;
-alter table public.banners enable row level security;
-alter table public.testimonials enable row level security;
-alter table public.media_library enable row level security;
-alter table public.activity_logs enable row level security;
-alter table public.newsletter_subscribers enable row level security;
-
--- Profiles: users read/update own profile; super_admin reads all
-create policy "profiles_self_select" on public.profiles for select
-  using (auth.uid() = id or public.has_admin_role(array['super_admin']));
-create policy "profiles_self_update" on public.profiles for update
-  using (auth.uid() = id or public.has_admin_role(array['super_admin']));
-create policy "profiles_admin_insert" on public.profiles for insert
-  with check (public.has_admin_role(array['super_admin']) or auth.uid() = id);
-
--- Admin Roles: admins can read own role; super_admin manages all
-create policy "admin_roles_select" on public.admin_roles for select
-  using (auth.uid() = user_id or public.has_admin_role(array['super_admin']));
-create policy "admin_roles_super_write" on public.admin_roles for all
-  using (public.has_admin_role(array['super_admin']))
-  with check (public.has_admin_role(array['super_admin']));
-
--- Categories: public reads active; super_admin & store_manager manage
-create policy "categories_public_read" on public.categories for select
-  using (is_active = true or public.is_admin());
-create policy "categories_admin_write" on public.categories for all
-  using (public.has_admin_role(array['super_admin', 'store_manager']))
-  with check (public.has_admin_role(array['super_admin', 'store_manager']));
-
--- Products: public reads published & non-archived; super_admin & store_manager manage
-create policy "products_public_read" on public.products for select
-  using ((is_published = true and is_archived = false) or public.is_admin());
-create policy "products_admin_write" on public.products for all
-  using (public.has_admin_role(array['super_admin', 'store_manager']))
-  with check (public.has_admin_role(array['super_admin', 'store_manager']));
-
--- Product Financials: strictly super_admin & store_manager (never public)
-create policy "product_financials_admin_only" on public.product_financials for all
-  using (public.has_admin_role(array['super_admin', 'store_manager']))
-  with check (public.has_admin_role(array['super_admin', 'store_manager']));
-
--- Product Images & Variants: public reads for visible products; store_manager/super_admin manage
-create policy "product_images_public_read" on public.product_images for select
-  using (
-    public.is_admin() or exists (
-      select 1 from public.products p where p.id = product_id and p.is_published = true and p.is_archived = false
-    )
-  );
-create policy "product_images_admin_write" on public.product_images for all
-  using (public.has_admin_role(array['super_admin', 'store_manager']))
-  with check (public.has_admin_role(array['super_admin', 'store_manager']));
-
-create policy "product_variants_public_read" on public.product_variants for select
-  using (
-    public.is_admin() or exists (
-      select 1 from public.products p where p.id = product_id and p.is_published = true and p.is_archived = false
-    )
-  );
-create policy "product_variants_admin_write" on public.product_variants for all
-  using (public.has_admin_role(array['super_admin', 'store_manager']))
-  with check (public.has_admin_role(array['super_admin', 'store_manager']));
-
--- Customers, Orders, Order Items: strictly super_admin & store_manager (public creates via SECURITY DEFINER RPC)
-create policy "customers_admin_only" on public.customers for all
-  using (public.has_admin_role(array['super_admin', 'store_manager']))
-  with check (public.has_admin_role(array['super_admin', 'store_manager']));
-
-create policy "orders_admin_only" on public.orders for all
-  using (public.has_admin_role(array['super_admin', 'store_manager']))
-  with check (public.has_admin_role(array['super_admin', 'store_manager']));
-
-create policy "order_items_admin_only" on public.order_items for all
-  using (public.has_admin_role(array['super_admin', 'store_manager']))
-  with check (public.has_admin_role(array['super_admin', 'store_manager']));
-
--- Site Settings: public reads storefront config; super_admin edits all, content_manager edits content
-create policy "site_settings_public_read" on public.site_settings for select
-  using (true);
-create policy "site_settings_admin_write" on public.site_settings for all
-  using (public.has_admin_role(array['super_admin', 'content_manager']))
-  with check (public.has_admin_role(array['super_admin', 'content_manager']));
-
--- Homepage Sections & Banners & Testimonials: public reads published/active; super_admin & content_manager manage
-create policy "homepage_sections_public_read" on public.homepage_sections for select
-  using (is_visible = true or public.is_admin());
-create policy "homepage_sections_admin_write" on public.homepage_sections for all
-  using (public.has_admin_role(array['super_admin', 'content_manager']))
-  with check (public.has_admin_role(array['super_admin', 'content_manager']));
-
-create policy "banners_public_read" on public.banners for select
-  using (is_active = true or public.is_admin());
-create policy "banners_admin_write" on public.banners for all
-  using (public.has_admin_role(array['super_admin', 'content_manager']))
-  with check (public.has_admin_role(array['super_admin', 'content_manager']));
-
-create policy "testimonials_public_read" on public.testimonials for select
-  using (is_published = true or public.is_admin());
-create policy "testimonials_admin_write" on public.testimonials for all
-  using (public.has_admin_role(array['super_admin', 'content_manager']))
-  with check (public.has_admin_role(array['super_admin', 'content_manager']));
-
--- Media Library: admins read/manage
-create policy "media_library_admin_read" on public.media_library for select
-  using (public.is_admin());
-create policy "media_library_admin_write" on public.media_library for all
-  using (public.is_admin())
-  with check (public.is_admin());
-
--- Activity Logs: admins insert/read (never public)
-create policy "activity_logs_admin_read" on public.activity_logs for select
-  using (public.is_admin());
-create policy "activity_logs_admin_insert" on public.activity_logs for insert
-  with check (public.is_admin());
-
--- Newsletter Subscribers: public can subscribe; only admins read
-create policy "newsletter_public_insert" on public.newsletter_subscribers for insert
-  with check (email ~* '^[^@\s]+@[^@\s]+\.[^@\s]+$');
-create policy "newsletter_admin_read" on public.newsletter_subscribers for select
-  using (public.has_admin_role(array['super_admin', 'store_manager']));
-
--- Grant execute on checkout RPC to public anon & authenticated roles
-grant execute on function public.create_whatsapp_order(text, text, text, text, text, jsonb) to anon, authenticated;

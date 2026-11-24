@@ -19,7 +19,7 @@ interface StoreContextValue {
   categories: Category[];
   banners: Banner[];
   testimonials: Testimonial[];
-  supabaseConnected: boolean;
+  databaseConnected: boolean;
   loading: boolean;
   refreshStore: () => Promise<void>;
 }
@@ -32,7 +32,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES_FALLBACK);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
-  const [supabaseConnected, setSupabaseConnected] = useState(false);
+  const [databaseConnected, setDatabaseConnected] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const refreshStore = useCallback(async () => {
@@ -44,7 +44,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setCategories(data.categories);
       setBanners(data.banners);
       setTestimonials(data.testimonials);
-      setSupabaseConnected(data.supabaseConnected);
+      setDatabaseConnected(data.databaseConnected);
     } finally {
       setLoading(false);
     }
@@ -62,7 +62,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         categories,
         banners,
         testimonials,
-        supabaseConnected,
+        databaseConnected,
         loading,
         refreshStore,
       }}

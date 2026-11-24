@@ -32,7 +32,7 @@ export function AdminImagePicker({
     try {
       const asset = await uploadImageToStorage(file, bucket, folder);
       onChange(asset.public_url);
-      showToast(`Uploaded ${file.name} to Supabase Storage.`);
+      showToast(`Uploaded ${file.name} to Vercel Blob.`);
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Image upload failed.', 'error');
     } finally {
@@ -59,7 +59,7 @@ export function AdminImagePicker({
             type="url"
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            placeholder="Paste image URL or upload directly to Supabase Storage"
+            placeholder="Paste image URL or upload directly to Vercel Blob"
             className="w-full px-3 py-2 rounded-lg border border-neutral-200 bg-white text-xs focus:outline-none focus:border-[#090909]"
           />
           <div className="flex flex-wrap items-center gap-2">

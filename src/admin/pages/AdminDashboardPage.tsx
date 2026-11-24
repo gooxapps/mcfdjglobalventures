@@ -161,7 +161,7 @@ export function AdminDashboardPage() {
             Boutique Performance Overview
           </h2>
           <p className="text-xs text-neutral-600 mt-0.5">
-            Live metrics computed directly from your Supabase orders, recorded payments, products, and customers.
+            Live metrics computed directly from your Neon PostgreSQL orders, recorded payments, products, and customers.
           </p>
         </div>
 

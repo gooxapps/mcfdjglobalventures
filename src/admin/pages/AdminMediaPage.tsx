@@ -150,7 +150,7 @@ export function AdminMediaPage() {
             Banner &amp; Media Manager
           </h2>
           <p className="text-xs text-neutral-600 mt-0.5">
-            Upload images to Supabase Storage buckets, copy URLs, and manage promotional banners.
+            Upload images to Vercel Blob storage, copy URLs, and manage promotional banners.
           </p>
         </div>
         <div className="inline-flex bg-white border border-[#E7DEC9] rounded-lg p-1 gap-1">
@@ -286,7 +286,7 @@ export function AdminMediaPage() {
                       <button
                         type="button"
                         onClick={async () => {
-                          if (!window.confirm('Delete this image from Supabase Storage?')) return;
+                          if (!window.confirm('Delete this image from Vercel Blob storage?')) return;
                           await deleteMediaAsset(asset);
                           showToast('Asset deleted.');
                           await load();

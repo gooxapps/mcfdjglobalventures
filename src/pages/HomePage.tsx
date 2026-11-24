@@ -23,7 +23,7 @@ import { SafeImage } from '@/src/components/SafeImage';
 import { SeoHead } from '@/src/components/SeoHead';
 
 export function HomePage() {
-  const { settings, sections, categories, banners, testimonials, supabaseConnected } =
+  const { settings, sections, categories, banners, testimonials, databaseConnected } =
     useStore();
   const { showToast } = useToast();
 
@@ -65,7 +65,7 @@ export function HomePage() {
     return () => {
       active = false;
     };
-  }, [supabaseConnected]);
+  }, [databaseConnected]);
 
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -9,6 +9,18 @@
       "destination": "/api/sitemap"
     },
     {
+      "source": "/api/auth/:path*",
+      "destination": "/api/auth?__path=:path*"
+    },
+    {
+      "source": "/api/storefront/:path*",
+      "destination": "/api/storefront?__path=:path*"
+    },
+    {
+      "source": "/api/admin/:path*",
+      "destination": "/api/admin?__path=:path*"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }

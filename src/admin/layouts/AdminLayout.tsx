@@ -20,7 +20,7 @@ import {
 import { BrandLogo } from '@/src/components/BrandLogo';
 import { useAdminAuth, type AdminPermission } from '@/src/contexts/AdminAuthContext';
 import { useStore } from '@/src/contexts/StoreContext';
-import { isSupabaseConfigured, supabase } from '@/src/lib/supabase';
+import { fetchPendingOrdersCount } from '@/src/services/adminService';
 
 interface NavItem {
   label: string;
@@ -101,16 +101,13 @@ export function AdminLayout() {
   useEffect(() => {
     let active = true;
     async function loadPendingCount() {
-      if (isPreviewMode && !isSupabaseConfigured) {
+      if (isPreviewMode) {
         if (active) setPendingOrdersCount(3);
         return;
       }
-      if (!isAuthorizedAdmin || !supabase) return;
-      const { count } = await supabase
-        .from('orders')
-        .select('id', { count: 'exact', head: true })
-        .in('order_status', ['New', 'Pending Confirmation']);
-      if (active) setPendingOrdersCount(count ?? 0);
+      if (!isAuthorizedAdmin) return;
+      const count = await fetchPendingOrdersCount();
+      if (active) setPendingOrdersCount(count);
     }
     loadPendingCount();
     return () => {
@@ -350,7 +347,7 @@ export function AdminLayout() {
                 Preview Mode
               </span>
               <span className="text-neutral-200">
-                Inspecting the MCFD J Admin Dashboard before database connection. Connect Supabase anytime to enable live saves &amp; logins.
+                Inspecting the MCFD J Admin Dashboard in local development preview mode. Connect Neon PostgreSQL anytime to enable live saves &amp; logins.
               </span>
             </div>
             <button

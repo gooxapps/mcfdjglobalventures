@@ -501,9 +501,9 @@ export function AdminProductsPage() {
       }
 
       if (addedCount === 0) {
-        showToast('All 10 starter luxury pieces are already in your Supabase catalogue.');
+        showToast('All 10 starter luxury pieces are already in your store catalogue.');
       } else {
-        showToast(`Published ${addedCount} curated luxury pieces to Supabase.`);
+        showToast(`Published ${addedCount} curated luxury pieces to the database.`);
       }
       await loadData();
     } catch (err) {
@@ -521,7 +521,7 @@ export function AdminProductsPage() {
             Product Catalogue Management
           </h2>
           <p className="text-xs text-neutral-600 mt-0.5">
-            Create, price, upload images, configure variants, and manage inventory in Supabase.
+            Create, price, upload images, configure variants, and manage store inventory.
           </p>
         </div>
 
@@ -679,7 +679,7 @@ export function AdminProductsPage() {
       <div className="bg-white border border-[#E7DEC9] rounded-xl overflow-hidden">
         {loading ? (
           <div className="p-10 text-center text-xs text-neutral-500">
-            Loading catalogue from Supabase...
+            Loading catalogue from database...
           </div>
         ) : filtered.length === 0 ? (
           <div className="p-12 text-center">
@@ -1067,7 +1067,7 @@ export function AdminProductsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="text-xs font-semibold uppercase tracking-wider text-[#090909]">
-                      Product Images (Supabase Storage)
+                      Product Images (Vercel Blob)
                     </h4>
                     <p className="text-[11px] text-neutral-500">
                       Upload multiple images, reorder, or choose the Main display image.

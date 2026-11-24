@@ -10,7 +10,7 @@ import { SeoHead } from '@/src/components/SeoHead';
 const PAGE_SIZE = 12;
 
 export function ShopPage() {
-  const { settings, categories, supabaseConnected } = useStore();
+  const { settings, categories, databaseConnected } = useStore();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const initialCategory = searchParams.get('category') || '';
@@ -254,10 +254,10 @@ export function ShopPage() {
         ) : paginatedProducts.length === 0 ? (
           <div className="bg-white border border-[#E7DEC9] rounded-xl p-12 text-center">
             <p className="font-serif text-2xl font-semibold text-[#090909] mb-2">
-              {supabaseConnected ? 'No matching pieces found' : 'Collection Catalogue Updating'}
+              {databaseConnected ? 'No matching pieces found' : 'Collection Catalogue Updating'}
             </p>
             <p className="text-sm text-neutral-600 max-w-md mx-auto mb-6">
-              {supabaseConnected
+              {databaseConnected
                 ? 'Try clearing active filters or exploring another fashion category.'
                 : 'Our seasonal pieces are currently being curated. Check back shortly or contact our client concierge for bespoke inquiries.'}
             </p>

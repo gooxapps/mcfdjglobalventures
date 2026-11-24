@@ -3,14 +3,16 @@ import { KeyRound, Plus, Shield, UserCheck } from 'lucide-react';
 import { useAdminAuth } from '@/src/contexts/AdminAuthContext';
 import { useToast } from '@/src/contexts/ToastContext';
 import {
+  createAdminUser,
   fetchActivityLogs,
   fetchAdminUsers,
+  updateAdminUserAccess,
 } from '@/src/services/adminService';
 import type { ActivityLog, AdminRoleType, AdminUserRecord } from '@/src/types/store';
 import { formatDateTime } from '@/src/utils/format';
 
 export function AdminUsersAndLogsPage() {
-  const { can, session, user, role, fullName, updatePassword } = useAdminAuth();
+  const { can, user, role, fullName, updatePassword } = useAdminAuth();
   const { showToast } = useToast();
 
   const [tab, setTab] = useState<'logs' | 'admins' | 'password'>('logs');
@@ -47,27 +49,14 @@ export function AdminUsersAndLogsPage() {
 
   const handleCreateAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!session?.access_token) {
-      showToast('Preview Mode: Connect your Supabase database to create administrators.', 'error');
-      return;
-    }
     setCreating(true);
     try {
-      const res = await fetch('/api/admin/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          fullName: newName,
-          email: newEmail,
-          password: newPassword,
-          role: newRole,
-        }),
+      await createAdminUser({
+        fullName: newName,
+        email: newEmail,
+        password: newPassword,
+        role: newRole,
       });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.error || 'Could not create administrator.');
       showToast(`Administrator ${newEmail} created with role ${newRole}.`);
       setNewName('');
       setNewEmail('');
@@ -81,21 +70,8 @@ export function AdminUsersAndLogsPage() {
   };
 
   const handleToggleAdmin = async (record: AdminUserRecord) => {
-    if (!session?.access_token) {
-      showToast('Preview Mode: Connect your Supabase database to update administrator access.', 'error');
-      return;
-    }
     try {
-      const res = await fetch(`/api/admin/users/${record.user_id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ is_active: !record.is_active }),
-      });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.error || 'Update failed.');
+      await updateAdminUserAccess(record.user_id, { is_active: !record.is_active });
       showToast('Administrator access updated.');
       await load();
     } catch (err) {

@@ -1,10 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import type { Session, User } from '@supabase/supabase-js';
-import {
-  ensureSupabaseInitialized,
-  isSupabaseConfigured,
-  supabase,
-} from '@/src/lib/supabase';
+import { apiRequest, fetchBackendStatus } from '@/src/lib/apiClient';
 import type { AdminRoleType } from '@/src/types/store';
 
 export type AdminPermission =
@@ -52,91 +47,72 @@ const ROLE_PERMISSIONS: Record<AdminRoleType, AdminPermission[]> = {
 const PREVIEW_MODE_STORAGE_KEY = 'mcfdj_admin_preview_mode_v1';
 const PREVIEW_NAME_STORAGE_KEY = 'mcfdj_admin_preview_name_v1';
 
+export interface AuthAdminUser {
+  id: string;
+  email: string;
+  fullName: string;
+  role: AdminRoleType;
+}
+
 interface AdminAuthContextValue {
-  user: User | null;
-  session: Session | null;
+  user: AuthAdminUser | null;
   role: AdminRoleType | null;
   fullName: string;
   loading: boolean;
   isAuthorizedAdmin: boolean;
   isPreviewMode: boolean;
+  previewAllowed: boolean;
+  databaseReady: boolean;
   enterPreviewMode: (displayName?: string) => void;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
-  sendPasswordReset: (email: string) => Promise<void>;
-  updatePassword: (newPassword: string) => Promise<void>;
+  updatePassword: (newPassword: string, currentPassword?: string) => Promise<void>;
+  refreshSession: () => Promise<void>;
   can: (permission: AdminPermission) => boolean;
 }
 
 const AdminAuthContext = createContext<AdminAuthContextValue | undefined>(undefined);
 
 export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<AuthAdminUser | null>(null);
   const [role, setRole] = useState<AdminRoleType | null>(null);
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(true);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [previewAllowed, setPreviewAllowed] = useState(false);
+  const [databaseReady, setDatabaseReady] = useState(false);
 
-  const loadAdminProfile = useCallback(async (currentUser: User | null) => {
-    if (!currentUser || !supabase) {
-      setRole(null);
-      setFullName('');
-      return;
-    }
+  const refreshSession = useCallback(async () => {
+    try {
+      const status = await fetchBackendStatus(true);
+      const dbOk = Boolean(status.databaseConfigured && status.databaseReachable);
+      setDatabaseReady(dbOk);
+      setPreviewAllowed(Boolean(status.previewAllowed));
 
-    const [{ data: roleRow }, { data: profileRow }] = await Promise.all([
-      supabase
-        .from('admin_roles')
-        .select('role, is_active')
-        .eq('user_id', currentUser.id)
-        .maybeSingle(),
-      supabase
-        .from('profiles')
-        .select('full_name')
-        .eq('id', currentUser.id)
-        .maybeSingle(),
-    ]);
-
-    if (roleRow && roleRow.is_active) {
-      setRole(roleRow.role as AdminRoleType);
-      setFullName(
-        profileRow?.full_name ||
-          (currentUser.user_metadata?.full_name as string) ||
-          currentUser.email ||
-          'Administrator'
-      );
-    } else {
-      setRole(null);
-      setFullName('');
-    }
-  }, []);
-
-  useEffect(() => {
-    let mounted = true;
-    let unsubscribe: (() => void) | null = null;
-
-    async function init() {
-      await ensureSupabaseInitialized();
-      if (!mounted) return;
-
-      if (!isSupabaseConfigured || !supabase) {
-        try {
-          if (sessionStorage.getItem(PREVIEW_MODE_STORAGE_KEY) === '1') {
-            setIsPreviewMode(true);
-            setRole('super_admin');
-            setFullName(
-              sessionStorage.getItem(PREVIEW_NAME_STORAGE_KEY) || 'Store Owner (Preview)'
-            );
+      if (!dbOk) {
+        if (status.previewAllowed) {
+          try {
+            if (sessionStorage.getItem(PREVIEW_MODE_STORAGE_KEY) === '1') {
+              setIsPreviewMode(true);
+              setRole('super_admin');
+              setFullName(
+                sessionStorage.getItem(PREVIEW_NAME_STORAGE_KEY) || 'Store Owner (Preview)'
+              );
+              setUser(null);
+              return;
+            }
+          } catch {
+            // Ignore storage errors
           }
-        } catch {
-          // Ignore storage error
         }
-        setLoading(false);
+        setIsPreviewMode(false);
+        setUser(null);
+        setRole(null);
+        setFullName('');
         return;
       }
 
-      // Live Supabase configured: clear any prior preview flag and enforce real auth
+      // Live Neon DB connected: clear any local preview flag and verify server JWT session cookie
       try {
         sessionStorage.removeItem(PREVIEW_MODE_STORAGE_KEY);
         sessionStorage.removeItem(PREVIEW_NAME_STORAGE_KEY);
@@ -145,73 +121,61 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       }
       setIsPreviewMode(false);
 
-      const { data } = await supabase.auth.getSession();
-      if (!mounted) return;
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-      await loadAdminProfile(data.session?.user ?? null);
-      if (mounted) setLoading(false);
-
-      const {
-        data: { subscription },
-      } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
-        if (!mounted) return;
-        setSession(nextSession);
-        setUser(nextSession?.user ?? null);
-        await loadAdminProfile(nextSession?.user ?? null);
-        if (mounted) setLoading(false);
-      });
-      unsubscribe = () => subscription.unsubscribe();
-    }
-
-    init();
-
-    return () => {
-      mounted = false;
-      if (unsubscribe) unsubscribe();
-    };
-  }, [loadAdminProfile]);
-
-  const enterPreviewMode = useCallback((displayName?: string) => {
-    if (isSupabaseConfigured) return;
-    const cleanName = displayName?.trim() || 'Store Owner (Preview)';
-    try {
-      sessionStorage.setItem(PREVIEW_MODE_STORAGE_KEY, '1');
-      sessionStorage.setItem(PREVIEW_NAME_STORAGE_KEY, cleanName);
+      const me = await apiRequest<{ authenticated: boolean; user: AuthAdminUser | null }>(
+        '/api/auth/me'
+      );
+      if (me.authenticated && me.user) {
+        setUser(me.user);
+        setRole(me.user.role);
+        setFullName(me.user.fullName || me.user.email);
+      } else {
+        setUser(null);
+        setRole(null);
+        setFullName('');
+      }
     } catch {
-      // Ignore storage error
+      setUser(null);
+      setRole(null);
+      setFullName('');
+    } finally {
+      setLoading(false);
     }
-    setIsPreviewMode(true);
-    setRole('super_admin');
-    setFullName(cleanName);
   }, []);
 
-  const signIn = useCallback(
-    async (email: string, password: string) => {
-      const client = (await ensureSupabaseInitialized()) || supabase;
-      if (!client) throw new Error('Supabase is not configured.');
-      const { data, error } = await client.auth.signInWithPassword({
+  useEffect(() => {
+    refreshSession();
+  }, [refreshSession]);
+
+  const enterPreviewMode = useCallback(
+    (displayName?: string) => {
+      if (databaseReady || !previewAllowed) return;
+      const cleanName = displayName?.trim() || 'Store Owner (Preview)';
+      try {
+        sessionStorage.setItem(PREVIEW_MODE_STORAGE_KEY, '1');
+        sessionStorage.setItem(PREVIEW_NAME_STORAGE_KEY, cleanName);
+      } catch {
+        // Ignore storage error
+      }
+      setIsPreviewMode(true);
+      setRole('super_admin');
+      setFullName(cleanName);
+    },
+    [databaseReady, previewAllowed]
+  );
+
+  const signIn = useCallback(async (email: string, password: string) => {
+    const res = await apiRequest<{ user: AuthAdminUser }>('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({
         email: email.trim().toLowerCase(),
         password,
-      });
-      if (error) throw new Error(error.message);
-
-      // Immediately verify admin_roles membership
-      const { data: roleRow } = await client
-        .from('admin_roles')
-        .select('role, is_active')
-        .eq('user_id', data.user.id)
-        .maybeSingle();
-
-      if (!roleRow || !roleRow.is_active) {
-        await client.auth.signOut();
-        throw new Error('This account does not have active administrator access.');
-      }
-
-      await loadAdminProfile(data.user);
-    },
-    [loadAdminProfile]
-  );
+      }),
+    });
+    setIsPreviewMode(false);
+    setUser(res.user);
+    setRole(res.user.role);
+    setFullName(res.user.fullName || res.user.email);
+  }, []);
 
   const signOut = useCallback(async () => {
     try {
@@ -221,57 +185,53 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       // Ignore
     }
     setIsPreviewMode(false);
-    if (supabase) {
-      await supabase.auth.signOut();
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    } catch {
+      // Ignore network hiccup during signout
     }
     setUser(null);
-    setSession(null);
     setRole(null);
     setFullName('');
   }, []);
 
-  const sendPasswordReset = useCallback(async (email: string) => {
-    if (!supabase) throw new Error('Supabase is not configured.');
-    const redirectTo = `${window.location.origin}/admin/login`;
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-      redirectTo,
-    });
-    if (error) throw new Error(error.message);
-  }, []);
-
-  const updatePassword = useCallback(async (newPassword: string) => {
-    if (!supabase) throw new Error('Supabase is not configured.');
+  const updatePassword = useCallback(async (newPassword: string, currentPassword?: string) => {
     if (newPassword.length < 10) {
       throw new Error('Password must be at least 10 characters.');
     }
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    if (error) throw new Error(error.message);
+    await apiRequest<{ updated: boolean }>('/api/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ newPassword, currentPassword }),
+    });
   }, []);
 
   const can = useCallback(
     (permission: AdminPermission) => {
-      if (isPreviewMode && !isSupabaseConfigured) return true;
+      if (isPreviewMode && previewAllowed && !databaseReady) return true;
       if (!role) return false;
       return ROLE_PERMISSIONS[role]?.includes(permission) ?? false;
     },
-    [role, isPreviewMode]
+    [role, isPreviewMode, previewAllowed, databaseReady]
   );
 
   return (
     <AdminAuthContext.Provider
       value={{
         user,
-        session,
         role,
         fullName,
         loading,
-        isAuthorizedAdmin: Boolean((user && role) || (isPreviewMode && !isSupabaseConfigured)),
-        isPreviewMode: Boolean(isPreviewMode && !isSupabaseConfigured),
+        isAuthorizedAdmin: Boolean(
+          (user && role) || (isPreviewMode && previewAllowed && !databaseReady)
+        ),
+        isPreviewMode: Boolean(isPreviewMode && previewAllowed && !databaseReady),
+        previewAllowed,
+        databaseReady,
         enterPreviewMode,
         signIn,
         signOut,
-        sendPasswordReset,
         updatePassword,
+        refreshSession,
         can,
       }}
     >

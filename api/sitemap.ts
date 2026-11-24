@@ -1,8 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
-import { getServerEnv, type ApiRequest, type ApiResponse } from './_lib/supabaseAdmin';
+import { getPool, getServerEnv, type ApiRequest, type ApiResponse } from './_lib/db';
 
 export default async function handler(req: ApiRequest, res: ApiResponse) {
-  const { supabaseUrl, supabaseAnonKey, appUrl } = getServerEnv();
+  const { appUrl } = getServerEnv();
   const hostHeader = req.headers['x-forwarded-host'] || req.headers.host;
   const host = Array.isArray(hostHeader) ? hostHeader[0] : hostHeader;
   const baseUrl = (
@@ -22,24 +21,25 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   const dynamicUrls: string[] = [];
 
   try {
-    if (supabaseUrl && supabaseAnonKey) {
-      const publicClient = createClient(supabaseUrl, supabaseAnonKey);
-      const [{ data: products }, { data: categories }] = await Promise.all([
-        publicClient
-          .from('products')
-          .select('slug')
-          .eq('is_published', true)
-          .eq('is_archived', false)
-          .limit(500),
-        publicClient.from('categories').select('slug').eq('is_active', true).limit(100),
+    const pool = getPool();
+    if (pool) {
+      const [productsRes, categoriesRes] = await Promise.all([
+        pool.query<{ slug: string }>(
+          `SELECT slug FROM public.products WHERE is_published = true AND is_archived = false LIMIT 500`
+        ),
+        pool.query<{ slug: string }>(
+          `SELECT slug FROM public.categories WHERE is_active = true LIMIT 100`
+        ),
       ]);
-      categories?.forEach((c) =>
+      categoriesRes.rows.forEach((c) =>
         dynamicUrls.push(`/shop?category=${encodeURIComponent(c.slug)}`)
       );
-      products?.forEach((p) => dynamicUrls.push(`/product/${encodeURIComponent(p.slug)}`));
+      productsRes.rows.forEach((p) =>
+        dynamicUrls.push(`/product/${encodeURIComponent(p.slug)}`)
+      );
     }
   } catch {
-    // Graceful fallback to static URLs
+    // Graceful fallback to static URLs if DB tables are not initialized yet
   }
 
   const escapeXml = (str: string) =>

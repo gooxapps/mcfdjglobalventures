@@ -3,6 +3,51 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (function () {
+        try {
+          var ownDesc = Object.getOwnPropertyDescriptor(window, 'fetch');
+          var protoDesc =
+            !ownDesc && typeof Window !== 'undefined'
+              ? Object.getOwnPropertyDescriptor(Window.prototype, 'fetch')
+              : null;
+          var targetDesc = ownDesc || protoDesc;
+          if (targetDesc && typeof targetDesc.get === 'function' && !targetDesc.set) {
+            if (!ownDesc || ownDesc.configurable) {
+              var origGetter = targetDesc.get;
+              var customFetch = null;
+              Object.defineProperty(window, 'fetch', {
+                configurable: true,
+                enumerable: targetDesc.enumerable !== false,
+                get: function () {
+                  return customFetch || origGetter.call(window);
+                },
+                set: function (fn) {
+                  if (typeof fn === 'function') {
+                    customFetch = fn;
+                  }
+                },
+              });
+            }
+          }
+        } catch (_) {}
+
+        window.addEventListener(
+          'error',
+          function (event) {
+            var file = event && typeof event.filename === 'string' ? event.filename : '';
+            if (
+              file.indexOf('chrome-extension://') === 0 ||
+              file.indexOf('moz-extension://') === 0
+            ) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+            }
+          },
+          true
+        );
+      })();
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>MCFD J GLOBAL VENTURES — Luxury Fashion & Apparel</title>
     <meta
