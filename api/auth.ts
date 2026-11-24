@@ -24,7 +24,9 @@ function resolveAuthAction(req: ApiRequest): string {
   const fromQuery = getQueryParam(req, '__path');
   if (fromQuery) return fromQuery.replace(/^\/+|\/+$/g, '');
   const cleanUrl = (req.url || '').split('?')[0];
-  return cleanUrl.replace(/^\/api\/auth\/?/, '').replace(/^\/+|\/+$/g, '');
+  return cleanUrl
+    .replace(/^\/api\/(?:auth|admin)\/?/, '')
+    .replace(/^\/+|\/+$/g, '');
 }
 
 export default async function handler(req: ApiRequest, res: ApiResponse) {
@@ -40,7 +42,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       return res.status(200).json({ ok: true });
     }
 
-    if (action === 'me' && method === 'GET') {
+    if ((action === 'me' || action === 'session') && method === 'GET') {
       const pool = getPool();
       if (!pool) {
         return res.status(200).json({ authenticated: false, user: null });

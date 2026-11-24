@@ -3,6 +3,8 @@ import type { Category, HomepageSection, SiteSettings } from '@/src/types/store'
 export const LOCAL_BRAND_ASSETS = {
   heroImage: '/src/assets/images/hero_luxury_atelier_1795367867558.jpg',
   aboutImage: '/src/assets/images/about_atelier_craft_1795367867366.jpg',
+  promoImage: '/src/assets/images/promo_concierge_atelier_1795484994325.jpg',
+  lookbookImage: '/src/assets/images/editorial_lookbook_banner_1795484994487.jpg',
   categoryImages: {
     'womens-fashion': '/src/assets/images/cat_womens_fashion_1795367867363.jpg',
     'mens-fashion': '/src/assets/images/cat_mens_fashion_1795367867324.jpg',

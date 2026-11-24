@@ -1,6 +1,6 @@
 {
   "name": "MCFD J GLOBAL VENTURES",
-  "description": "Luxury fashion e-commerce boutique and private store administration platform for MCFD J GLOBAL VENTURES, featuring multi-product WhatsApp ordering and Supabase persistence.",
+  "description": "Luxury fashion e-commerce boutique and private store administration platform for MCFD J GLOBAL VENTURES, featuring multi-product WhatsApp ordering and Neon PostgreSQL persistence.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

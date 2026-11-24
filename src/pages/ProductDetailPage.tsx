@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { AnimatePresence, motion } from 'motion/react';
 import {
   ArrowLeft,
   Check,
@@ -240,13 +241,25 @@ export function ProductDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
           {/* Left: Gallery */}
           <div className="lg:col-span-7 space-y-4">
-            <div className="aspect-[4/5] bg-white border border-[#E7DEC9] rounded-xl overflow-hidden">
-              <SafeImage
-                src={activeImage || product.main_image_url}
-                alt={product.name}
-                fallbackLabel={product.name}
-                className="w-full h-full object-cover"
-              />
+            <div className="aspect-[4/5] bg-white border border-[#E7DEC9] rounded-xl overflow-hidden relative">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeImage || product.main_image_url || 'primary'}
+                  initial={{ opacity: 0.4, scale: 1.01 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0.4 }}
+                  transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+                  className="w-full h-full"
+                >
+                  <SafeImage
+                    src={activeImage || product.main_image_url}
+                    alt={product.name}
+                    fallbackLabel={product.name}
+                    loading="eager"
+                    className="w-full h-full object-cover"
+                  />
+                </motion.div>
+              </AnimatePresence>
             </div>
 
             {galleryImages.length > 1 && (

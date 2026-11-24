@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'motion/react';
 import {
   ChevronDown,
   Facebook,
@@ -31,7 +32,27 @@ export function StorefrontLayout() {
   const [shopDropdownOpen, setShopDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [promoIndex, setPromoIndex] = useState(0);
   const navigate = useNavigate();
+
+  const announcementSlides = [
+    settings.announcement_text,
+    ...(settings.promo_messages || []),
+  ]
+    .map((m) => (m || '').trim())
+    .filter((m, idx, arr) => m.length > 0 && arr.indexOf(m) === idx);
+
+  useEffect(() => {
+    if (announcementSlides.length <= 1) return;
+    const timer = window.setInterval(() => {
+      setPromoIndex((i) => (i + 1) % announcementSlides.length);
+    }, 4500);
+    return () => window.clearInterval(timer);
+  }, [announcementSlides.length]);
+
+  const activeAnnouncement =
+    announcementSlides[promoIndex % Math.max(1, announcementSlides.length)] ||
+    settings.announcement_text;
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,11 +91,20 @@ export function StorefrontLayout() {
       {!bannerDismissed && (
         <div className="bg-[#090909] text-[#FAF5EE] border-b border-[#D4AF5A]/20 text-[11px] sm:text-xs">
           <div className="max-w-7xl mx-auto px-3 sm:px-6 min-h-[36px] py-1.5 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <span className="inline-flex items-center gap-1.5 text-[#FAF5EE]/90 truncate">
-                <Globe className="w-3.5 h-3.5 text-[#D4AF5A] shrink-0" />
-                <span className="truncate">{settings.announcement_text}</span>
-              </span>
+            <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
+              <Globe className="w-3.5 h-3.5 text-[#D4AF5A] shrink-0" />
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={activeAnnouncement}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                  className="text-[#FAF5EE]/90 truncate block"
+                >
+                  {activeAnnouncement}
+                </motion.span>
+              </AnimatePresence>
             </div>
 
             <div className="flex items-center gap-3 shrink-0">
@@ -172,29 +202,37 @@ export function StorefrontLayout() {
                     <ChevronDown className="w-3.5 h-3.5" />
                   </NavLink>
 
-                  {shopDropdownOpen && (
-                    <div className="absolute left-0 top-full pt-2 w-56 z-40">
-                      <div className="bg-[#121212] border border-[#D4AF5A]/30 rounded-xl shadow-2xl p-2 space-y-0.5">
-                        <Link
-                          to="/shop"
-                          onClick={() => setShopDropdownOpen(false)}
-                          className="block px-3 py-2 rounded-lg text-xs font-semibold text-[#E8BE62] hover:bg-white/5"
-                        >
-                          All Luxury Pieces
-                        </Link>
-                        {categories.map((cat) => (
+                  <AnimatePresence>
+                    {shopDropdownOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+                        className="absolute left-0 top-full pt-2 w-56 z-40"
+                      >
+                        <div className="bg-[#121212] border border-[#D4AF5A]/30 rounded-xl shadow-2xl p-2 space-y-0.5">
                           <Link
-                            key={cat.id}
-                            to={`/shop?category=${encodeURIComponent(cat.slug)}`}
+                            to="/shop"
                             onClick={() => setShopDropdownOpen(false)}
-                            className="block px-3 py-2 rounded-lg text-xs text-neutral-200 hover:bg-white/5 hover:text-[#E8BE62]"
+                            className="block px-3 py-2 rounded-lg text-xs font-semibold text-[#E8BE62] hover:bg-white/5"
                           >
-                            {cat.name}
+                            All Luxury Pieces
                           </Link>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                          {categories.map((cat) => (
+                            <Link
+                              key={cat.id}
+                              to={`/shop?category=${encodeURIComponent(cat.slug)}`}
+                              onClick={() => setShopDropdownOpen(false)}
+                              className="block px-3 py-2 rounded-lg text-xs text-neutral-200 hover:bg-white/5 hover:text-[#E8BE62]"
+                            >
+                              {cat.name}
+                            </Link>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               ) : (
                 <NavLink
@@ -253,46 +291,71 @@ export function StorefrontLayout() {
               className="relative inline-flex items-center justify-center p-2 sm:p-2.5 rounded-full text-white hover:text-[#E8BE62] hover:bg-white/5 transition-colors shrink-0"
             >
               <ShoppingCart className="w-5 h-5" />
-              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#DC2626] text-white text-[10px] font-bold flex items-center justify-center tabular-nums">
+              <motion.span
+                key={totalItems}
+                initial={{ scale: 0.75 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', stiffness: 460, damping: 22 }}
+                className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#DC2626] text-white text-[10px] font-bold flex items-center justify-center tabular-nums"
+              >
                 {totalItems}
-              </span>
+              </motion.span>
             </button>
           </div>
         </div>
 
         {/* Expandable Mobile Search Bar */}
-        {mobileSearchOpen && (
-          <div className="md:hidden border-t border-white/10 bg-[#090909] px-4 py-3">
-            <form onSubmit={handleSearchSubmit} className="flex items-center gap-2.5">
-              <Search className="w-4 h-4 text-[#D4AF5A] shrink-0" />
-              <input
-                type="search"
-                autoFocus
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search dresses, handbags, footwear..."
-                className="flex-1 bg-transparent text-sm text-white placeholder:text-neutral-400 focus:outline-none"
-              />
-              <button
-                type="submit"
-                className="px-3.5 py-1.5 rounded-full bg-[#D4AF5A] text-[#090909] text-xs font-semibold"
-              >
-                Go
-              </button>
-            </form>
-          </div>
-        )}
+        <AnimatePresence>
+          {mobileSearchOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+              className="md:hidden border-t border-white/10 bg-[#090909] px-4 py-3"
+            >
+              <form onSubmit={handleSearchSubmit} className="flex items-center gap-2.5">
+                <Search className="w-4 h-4 text-[#D4AF5A] shrink-0" />
+                <input
+                  type="search"
+                  autoFocus
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search dresses, handbags, footwear..."
+                  className="flex-1 bg-transparent text-sm text-white placeholder:text-neutral-400 focus:outline-none"
+                />
+                <button
+                  type="submit"
+                  className="px-3.5 py-1.5 rounded-full bg-[#D4AF5A] text-[#090909] text-xs font-semibold"
+                >
+                  Go
+                </button>
+              </form>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       {/* Mobile Navigation Drawer */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden flex">
-          <div
-            className="fixed inset-0 bg-black/60"
-            onClick={() => setMobileMenuOpen(false)}
-            aria-hidden="true"
-          />
-          <aside className="relative z-10 w-80 max-w-[85vw] bg-[#090909] text-white h-full flex flex-col p-5 border-r border-[#D4AF5A]/25 overflow-y-auto">
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden flex">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/60"
+              onClick={() => setMobileMenuOpen(false)}
+              aria-hidden="true"
+            />
+            <motion.aside
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+              className="relative z-10 w-80 max-w-[85vw] bg-[#090909] text-white h-full flex flex-col p-5 border-r border-[#D4AF5A]/25 overflow-y-auto"
+            >
             <div className="flex items-center justify-between pb-4 border-b border-white/10">
               <BrandLogo variant="dark" size="sm" logoUrl={settings.logo_url} />
               <button
@@ -367,9 +430,10 @@ export function StorefrontLayout() {
                 Browse Full Boutique
               </Link>
             </div>
-          </aside>
-        </div>
-      )}
+            </motion.aside>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Main Content */}
       <main className="flex-1">

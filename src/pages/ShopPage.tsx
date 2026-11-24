@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import { motion } from 'motion/react';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { useStore } from '@/src/contexts/StoreContext';
 import { fetchPublishedProducts } from '@/src/services/storefrontService';
@@ -280,8 +281,19 @@ export function ShopPage() {
         ) : (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-6">
-              {paginatedProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+              {paginatedProducts.map((product, idx) => (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.3,
+                    delay: Math.min(idx, 7) * 0.035,
+                    ease: [0.16, 1, 0.3, 1],
+                  }}
+                >
+                  <ProductCard product={product} />
+                </motion.div>
               ))}
             </div>
 

@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import bcrypt from 'bcryptjs';
@@ -28,13 +29,37 @@ async function main() {
 
   const client = await pool.connect();
   try {
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS public.schema_migrations (
+        filename text PRIMARY KEY,
+        checksum text NOT NULL,
+        applied_at timestamptz NOT NULL DEFAULT now()
+      );
+    `);
+
+    const appliedRes = await client.query<{ filename: string; checksum: string }>(
+      'SELECT filename, checksum FROM public.schema_migrations'
+    );
+    const appliedMap = new Map(appliedRes.rows.map((r) => [r.filename, r.checksum]));
+
     for (const file of files) {
       const fullPath = path.join(migrationsDir, file);
       const sql = fs.readFileSync(fullPath, 'utf8');
+      const checksum = crypto.createHash('sha256').update(sql).digest('hex');
+
+      if (appliedMap.has(file)) {
+        console.log(`Skipping already applied migration: ${file}`);
+        continue;
+      }
+
       console.log(`Running migration: ${file}`);
       await client.query('BEGIN');
       try {
         await client.query(sql);
+        await client.query(
+          `INSERT INTO public.schema_migrations (filename, checksum) VALUES ($1, $2)`,
+          [file, checksum]
+        );
         await client.query('COMMIT');
         console.log(`Completed migration: ${file}`);
       } catch (err) {
@@ -43,7 +68,7 @@ async function main() {
       }
     }
 
-    // Optional automatic initial Super Admin creation from env vars if no admin exists
+    // Automatic initial Super Admin creation from env vars if no admin exists
     const initialEmail = (process.env.ADMIN_INITIAL_EMAIL || '').trim().toLowerCase();
     const initialPassword = process.env.ADMIN_INITIAL_PASSWORD || '';
 

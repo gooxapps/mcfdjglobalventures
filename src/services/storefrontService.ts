@@ -4,7 +4,10 @@ import {
   DEFAULT_HOMEPAGE_SECTIONS,
   DEFAULT_SITE_SETTINGS,
 } from '@/src/lib/defaults';
-import { getPreviewAdminProducts } from '@/src/lib/adminPreviewData';
+import {
+  getPreviewAdminProducts,
+  getPreviewTestimonials,
+} from '@/src/lib/adminPreviewData';
 import type {
   Banner,
   Category,
@@ -32,7 +35,7 @@ export async function fetchStorefrontBootstrap(): Promise<StorefrontBootstrapDat
         sections: DEFAULT_HOMEPAGE_SECTIONS,
         categories: DEFAULT_CATEGORIES_FALLBACK,
         banners: [],
-        testimonials: [],
+        testimonials: getPreviewTestimonials(),
         databaseConnected: false,
       };
     }
@@ -76,7 +79,7 @@ export async function fetchStorefrontBootstrap(): Promise<StorefrontBootstrapDat
       sections: DEFAULT_HOMEPAGE_SECTIONS,
       categories: DEFAULT_CATEGORIES_FALLBACK,
       banners: [],
-      testimonials: [],
+      testimonials: getPreviewTestimonials(),
       databaseConnected: false,
     };
   }

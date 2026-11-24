@@ -1,4 +1,5 @@
 import { del, put } from '@vercel/blob';
+import authHandler from './auth';
 import {
   authenticateAdminRequest,
   hasAdminPermission,
@@ -41,8 +42,18 @@ const ALLOWED_BUCKETS = new Set([
   'category-images',
   'banners',
   'brand-assets',
+  'testimonial-images',
+  'media',
 ]);
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB
+const ADMIN_AUTH_SUBPATHS = new Set([
+  'bootstrap',
+  'login',
+  'logout',
+  'session',
+  'me',
+  'change-password',
+]);
 
 function resolveAdminPath(req: ApiRequest): string {
   const fromQuery = getQueryParam(req, '__path');
@@ -53,6 +64,10 @@ function resolveAdminPath(req: ApiRequest): string {
 
 export default async function handler(req: ApiRequest, res: ApiResponse) {
   const subPath = resolveAdminPath(req);
+  if (ADMIN_AUTH_SUBPATHS.has(subPath)) {
+    return authHandler(req, res);
+  }
+
   const method = (req.method || 'GET').toUpperCase();
   const pool = getPool();
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, ShoppingCart } from 'lucide-react';
+import { motion } from 'motion/react';
+import { Check, Heart, ShoppingCart } from 'lucide-react';
 import type { Product } from '@/src/types/store';
 import { formatPrice } from '@/src/utils/format';
 import { useCart } from '@/src/contexts/CartContext';
@@ -30,6 +31,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const [wishlisted, setWishlisted] = useState<boolean>(() =>
     readWishlist().includes(product.id)
   );
+  const [justAdded, setJustAdded] = useState(false);
 
   const currentPrice =
     product.is_on_sale && product.discounted_price !== null
@@ -75,10 +77,16 @@ export function ProductCard({ product }: ProductCardProps) {
     addToCart(product, { quantity: 1 });
     showToast(`${product.name} added to your shopping bag.`);
     openDrawer();
+    setJustAdded(true);
+    window.setTimeout(() => setJustAdded(false), 1100);
   };
 
   return (
-    <article className="group bg-white border border-[#E7DEC9] rounded-xl overflow-hidden flex flex-col transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_30px_-12px_rgba(9,9,9,0.14)]">
+    <motion.article
+      whileHover={{ y: -3 }}
+      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+      className="group bg-white border border-[#E7DEC9] hover:border-[#D4AF5A]/60 rounded-xl overflow-hidden flex flex-col transition-shadow duration-200 hover:shadow-[0_14px_30px_-12px_rgba(9,9,9,0.14)]"
+    >
       <Link
         to={`/product/${product.slug}`}
         className="relative aspect-square w-full bg-[#FAF5EE] overflow-hidden block"
@@ -87,11 +95,12 @@ export function ProductCard({ product }: ProductCardProps) {
           src={product.main_image_url || product.images?.[0]?.url}
           alt={product.name}
           fallbackLabel={product.name}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
         />
 
-        <button
+        <motion.button
           type="button"
+          whileTap={{ scale: 0.85 }}
           onClick={handleToggleWishlist}
           aria-label={wishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
           className="absolute top-2 left-2 w-7 h-7 rounded-full bg-white/90 backdrop-blur-xs border border-[#E7DEC9] flex items-center justify-center text-[#090909] hover:border-[#D4AF5A] transition-colors shadow-xs opacity-90 sm:opacity-0 sm:group-hover:opacity-100"
@@ -101,7 +110,7 @@ export function ProductCard({ product }: ProductCardProps) {
               wishlisted ? 'fill-[#D4AF5A] text-[#D4AF5A]' : 'text-neutral-600'
             }`}
           />
-        </button>
+        </motion.button>
 
         {singleLabel && (
           <span
@@ -147,17 +156,22 @@ export function ProductCard({ product }: ProductCardProps) {
           </div>
         </div>
 
-        <button
+        <motion.button
           type="button"
+          whileTap={{ scale: 0.9 }}
           disabled={isOutOfStock}
           onClick={handleQuickAdd}
           aria-label={isOutOfStock ? 'Unavailable' : `Add ${product.name} to cart`}
           title={isOutOfStock ? 'Out of stock' : 'Add to cart'}
-          className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg border border-[#E7DEC9] bg-white text-[#090909] hover:bg-[#090909] hover:text-[#E8BE62] hover:border-[#090909] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center shrink-0 transition-colors shadow-2xs"
+          className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg border flex items-center justify-center shrink-0 transition-colors shadow-2xs ${
+            justAdded
+              ? 'bg-[#16A34A] border-[#16A34A] text-white'
+              : 'border-[#E7DEC9] bg-white text-[#090909] hover:bg-[#090909] hover:text-[#E8BE62] hover:border-[#090909] disabled:opacity-40 disabled:cursor-not-allowed'
+          }`}
         >
-          <ShoppingCart className="w-4 h-4" />
-        </button>
+          {justAdded ? <Check className="w-4 h-4" /> : <ShoppingCart className="w-4 h-4" />}
+        </motion.button>
       </div>
-    </article>
+    </motion.article>
   );
 }

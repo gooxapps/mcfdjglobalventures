@@ -1,5 +1,6 @@
-import React from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { MotionConfig } from 'motion/react';
 import { ErrorBoundary } from '@/src/components/ErrorBoundary';
 import { ToastProvider } from '@/src/contexts/ToastContext';
 import { StoreProvider } from '@/src/contexts/StoreContext';
@@ -58,15 +59,25 @@ function RequirePermission({
   return <>{children}</>;
 }
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+  }, [pathname]);
+  return null;
+}
+
 export default function App() {
   return (
-    <ErrorBoundary>
-      <ToastProvider>
-        <StoreProvider>
-          <CartProvider>
-            <AdminAuthProvider>
-              <BrowserRouter>
-                <Routes>
+    <MotionConfig reducedMotion="user">
+      <ErrorBoundary>
+        <ToastProvider>
+          <StoreProvider>
+            <CartProvider>
+              <AdminAuthProvider>
+                <BrowserRouter>
+                  <ScrollToTop />
+                  <Routes>
                   {/* Public Luxury Storefront */}
                   <Route element={<StorefrontLayout />}>
                     <Route path="/" element={<HomePage />} />
@@ -169,5 +180,6 @@ export default function App() {
         </StoreProvider>
       </ToastProvider>
     </ErrorBoundary>
+    </MotionConfig>
   );
 }

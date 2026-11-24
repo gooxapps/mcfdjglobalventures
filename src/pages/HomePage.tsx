@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'motion/react';
 import {
   ArrowRight,
   Gem,
@@ -125,34 +126,42 @@ export function HomePage() {
 
           {/* Mobile: slim horizontal 1-row category strip; Tablet/Desktop: 5-col editorial grid */}
           <div className="flex overflow-x-auto gap-2.5 pb-1 snap-x sm:grid sm:grid-cols-3 lg:grid-cols-5 sm:gap-4 sm:overflow-visible sm:pb-0">
-            {categories.map((cat) => (
-              <Link
+            {categories.map((cat, idx) => (
+              <motion.div
                 key={cat.id}
-                to={`/shop?category=${encodeURIComponent(cat.slug)}`}
-                className="group relative w-[124px] shrink-0 snap-start aspect-[4/3] sm:w-auto sm:aspect-[5/4] rounded-xl overflow-hidden bg-[#090909] block shadow-sm border border-[#E7DEC9]/60"
+                initial={{ opacity: 0, y: 14 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.15 }}
+                transition={{ duration: 0.4, delay: idx * 0.05, ease: [0.16, 1, 0.3, 1] }}
+                className="w-[124px] shrink-0 snap-start sm:w-auto"
               >
-                <SafeImage
-                  src={resolveCategoryImage(cat)}
-                  alt={cat.name}
-                  fallbackLabel={cat.name}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/10" />
-                <div className="absolute inset-x-0 bottom-0 p-2 sm:p-4 flex items-end justify-between gap-1.5">
-                  <div className="min-w-0">
-                    <h3 className="font-serif text-xs sm:text-lg lg:text-xl font-semibold text-white leading-tight truncate">
-                      {cat.name}
-                    </h3>
-                    <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-[#FAF5EE]/90 mt-1 font-medium">
-                      Shop Now
-                      <ArrowRight className="w-3 h-3 text-[#E8BE62]" />
+                <Link
+                  to={`/shop?category=${encodeURIComponent(cat.slug)}`}
+                  className="group relative aspect-[4/3] sm:aspect-[5/4] rounded-xl overflow-hidden bg-[#090909] block shadow-sm border border-[#E7DEC9]/60"
+                >
+                  <SafeImage
+                    src={resolveCategoryImage(cat)}
+                    alt={cat.name}
+                    fallbackLabel={cat.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/10" />
+                  <div className="absolute inset-x-0 bottom-0 p-2 sm:p-4 flex items-end justify-between gap-1.5">
+                    <div className="min-w-0">
+                      <h3 className="font-serif text-xs sm:text-lg lg:text-xl font-semibold text-white leading-tight truncate">
+                        {cat.name}
+                      </h3>
+                      <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-[#FAF5EE]/90 mt-1 font-medium">
+                        Shop Now
+                        <ArrowRight className="w-3 h-3 text-[#E8BE62]" />
+                      </span>
+                    </div>
+                    <span className="w-5 h-5 sm:w-7 sm:h-7 rounded-full bg-[#D4AF5A] text-[#090909] flex items-center justify-center shrink-0 transition-transform group-hover:translate-x-0.5">
+                      <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                     </span>
                   </div>
-                  <span className="w-5 h-5 sm:w-7 sm:h-7 rounded-full bg-[#D4AF5A] text-[#090909] flex items-center justify-center shrink-0 transition-transform group-hover:translate-x-0.5">
-                    <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                  </span>
-                </div>
-              </Link>
+                </Link>
+              </motion.div>
             ))}
           </div>
         </section>
@@ -226,8 +235,20 @@ export function HomePage() {
               ) : (
                 <>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5 sm:gap-4">
-                    {featuredProducts.map((product) => (
-                      <ProductCard key={product.id} product={product} />
+                    {featuredProducts.map((product, idx) => (
+                      <motion.div
+                        key={product.id}
+                        initial={{ opacity: 0, y: 14 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, amount: 0.08 }}
+                        transition={{
+                          duration: 0.35,
+                          delay: Math.min(idx, 5) * 0.04,
+                          ease: [0.16, 1, 0.3, 1],
+                        }}
+                      >
+                        <ProductCard product={product} />
+                      </motion.div>
                     ))}
                   </div>
                   <div className="mt-6 lg:hidden flex flex-wrap items-center justify-center gap-2.5">
@@ -309,7 +330,7 @@ export function HomePage() {
 
     if (sectionKey === 'promo_banner') {
       const bannerImg =
-        activePromoBanner?.image_url || settings.about_image_url || LOCAL_BRAND_ASSETS.aboutImage;
+        activePromoBanner?.image_url || LOCAL_BRAND_ASSETS.promoImage;
       const bannerTitle = activePromoBanner?.title || title;
       const bannerSubtitle = activePromoBanner?.subtitle || subtitle;
       const bannerUrl = activePromoBanner?.link_url || '/about';
@@ -317,7 +338,13 @@ export function HomePage() {
 
       return (
         <section key={sectionKey} className="max-w-7xl mx-auto px-3 sm:px-6 py-7 sm:py-12">
-          <div className="bg-[#090909] text-white rounded-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-2 items-stretch border border-[#D4AF5A]/25">
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="bg-[#090909] text-white rounded-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-2 items-stretch border border-[#D4AF5A]/25"
+          >
             <div className="p-6 sm:p-12 lg:p-14 flex flex-col justify-center">
               <p className="text-[11px] sm:text-xs uppercase tracking-[0.24em] text-[#E8BE62] mb-2 sm:mb-3">
                 MCFD J GLOBAL VENTURES
@@ -338,14 +365,14 @@ export function HomePage() {
                 </Link>
               </div>
             </div>
-            <div className="relative min-h-[200px] sm:min-h-[300px] lg:min-h-full">
+            <div className="relative min-h-[210px] sm:min-h-[300px] lg:min-h-full overflow-hidden">
               <SafeImage
                 src={bannerImg}
                 alt={bannerTitle}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.03]"
               />
             </div>
-          </div>
+          </motion.div>
         </section>
       );
     }
@@ -353,22 +380,32 @@ export function HomePage() {
     if (sectionKey === 'testimonials' && testimonials.length > 0) {
       return (
         <section key={sectionKey} className="max-w-7xl mx-auto px-3 sm:px-6 py-8 sm:py-12 border-t border-[#E5D9C5]">
-          <div className="text-center max-w-2xl mx-auto mb-6 sm:mb-9">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="text-center max-w-2xl mx-auto mb-6 sm:mb-9"
+          >
             <h2 className="font-serif text-2xl sm:text-4xl font-semibold text-[#090909]">
               {title}
             </h2>
             {subtitle && <p className="text-xs sm:text-sm text-neutral-600 mt-1.5">{subtitle}</p>}
-          </div>
+          </motion.div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-            {testimonials.map((t) => (
-              <blockquote
+            {testimonials.map((t, idx) => (
+              <motion.blockquote
                 key={t.id}
-                className="bg-white border border-[#E7DEC9] rounded-xl p-5 sm:p-6 flex flex-col justify-between"
+                initial={{ opacity: 0, y: 14 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.15 }}
+                transition={{ duration: 0.4, delay: idx * 0.08, ease: [0.16, 1, 0.3, 1] }}
+                className="bg-white border border-[#E7DEC9] rounded-xl p-5 sm:p-6 flex flex-col justify-between hover:border-[#D4AF5A]/60 transition-colors"
               >
                 <div>
                   <div className="flex items-center gap-1 text-[#D4AF5A] mb-3">
-                    {Array.from({ length: t.rating }).map((_, idx) => (
-                      <Star key={idx} className="w-4 h-4 fill-[#D4AF5A]" />
+                    {Array.from({ length: t.rating }).map((_, starIdx) => (
+                      <Star key={starIdx} className="w-4 h-4 fill-[#D4AF5A]" />
                     ))}
                   </div>
                   <p className="text-xs sm:text-sm text-[#242424] leading-relaxed">“{t.quote}”</p>
@@ -380,7 +417,7 @@ export function HomePage() {
                     {t.location ? ` · ${t.location}` : ''}
                   </p>
                 </footer>
-              </blockquote>
+              </motion.blockquote>
             ))}
           </div>
         </section>
@@ -409,10 +446,16 @@ export function HomePage() {
 
       {/* Compact Editorial Hero on Mobile / Full Luxury Hero on Desktop */}
       <section className="relative bg-[#090909] text-white overflow-hidden">
-        <div className="absolute inset-0">
+        <motion.div
+          initial={{ opacity: 0.85, scale: 1.04 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+          className="absolute inset-0"
+        >
           <SafeImage
             src={settings.hero_image_url || LOCAL_BRAND_ASSETS.heroImage}
             alt="MCFD J GLOBAL VENTURES Luxury Fashion Campaign"
+            loading="eager"
             className="w-full h-full object-cover object-top lg:object-[75%_15%]"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-[#090909] via-[#090909]/85 sm:via-[#090909]/75 to-[#090909]/30" />
@@ -423,14 +466,22 @@ export function HomePage() {
                 'radial-gradient(circle at 82% 55%, rgba(212,175,90,0.22) 0%, rgba(212,175,90,0) 48%)',
             }}
           />
-        </div>
+        </motion.div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-7 sm:py-20 lg:py-28 min-h-[200px] sm:min-h-[460px] lg:min-h-[580px] flex items-center">
           <div className="max-w-xl">
-            <p className="text-[10px] sm:text-xs tracking-[0.28em] uppercase text-[#E8BE62] font-medium mb-1.5 sm:mb-4">
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              className="text-[10px] sm:text-xs tracking-[0.28em] uppercase text-[#E8BE62] font-medium mb-1.5 sm:mb-4"
+            >
               {settings.business_name}
-            </p>
-            <h1
+            </motion.p>
+            <motion.h1
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, delay: 0.06, ease: [0.16, 1, 0.3, 1] }}
               className="font-serif text-2xl sm:text-5xl lg:text-6xl font-semibold leading-[1.08] text-white mb-2 sm:mb-5"
               style={{ textWrap: 'balance' }}
             >
@@ -448,11 +499,21 @@ export function HomePage() {
                   );
                 })()}
               </span>
-            </h1>
-            <p className="text-xs sm:text-base text-neutral-200 leading-relaxed max-w-md mb-4 sm:mb-8 line-clamp-2 sm:line-clamp-none">
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
+              className="text-xs sm:text-base text-neutral-200 leading-relaxed max-w-md mb-4 sm:mb-8 line-clamp-2 sm:line-clamp-none"
+            >
               {settings.hero_description}
-            </p>
-            <div className="flex flex-wrap items-center gap-2.5 sm:gap-4">
+            </motion.p>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.18, ease: [0.16, 1, 0.3, 1] }}
+              className="flex flex-wrap items-center gap-2.5 sm:gap-4"
+            >
               <Link
                 to={settings.hero_button_url || '/shop'}
                 className="inline-flex items-center gap-2 px-4 sm:px-7 py-2.5 sm:py-3.5 rounded-full bg-gradient-to-r from-[#E8BE62] to-[#D4AF5A] text-[#090909] text-xs sm:text-sm font-semibold hover:brightness-105 transition-all shadow-lg"
@@ -467,7 +528,7 @@ export function HomePage() {
               >
                 Explore Houses
               </Link>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
@@ -475,11 +536,14 @@ export function HomePage() {
       {/* Compact Cream Trust Strip */}
       <section className="bg-[#FAF5EE] border-b border-[#E5D9C5]">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-6 grid grid-cols-2 lg:grid-cols-4 lg:divide-x divide-[#D4AF5A]/25 gap-x-3 gap-y-2.5 sm:gap-y-4 lg:gap-0">
-          {trustItems.map((item) => {
+          {trustItems.map((item, idx) => {
             const Icon = item.icon;
             return (
-              <div
+              <motion.div
                 key={item.title}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, delay: 0.1 + idx * 0.05, ease: [0.16, 1, 0.3, 1] }}
                 className="flex items-center gap-2 sm:gap-3.5 lg:px-5 lg:first:pl-0"
               >
                 <Icon className="w-4 h-4 sm:w-7 sm:h-7 text-[#B89038] shrink-0" strokeWidth={1.6} />
@@ -489,7 +553,7 @@ export function HomePage() {
                   </h3>
                   <p className="text-[10px] sm:text-xs text-neutral-600 truncate">{item.subtitle}</p>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
         </div>

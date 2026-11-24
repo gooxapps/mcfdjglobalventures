@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'motion/react';
 import { Minus, Plus, ShoppingCart, Trash2, X } from 'lucide-react';
 import { useCart } from '@/src/contexts/CartContext';
 import { useStore } from '@/src/contexts/StoreContext';
@@ -28,168 +29,185 @@ export function CartDrawer() {
   const { settings } = useStore();
   const navigate = useNavigate();
 
-  if (!isDrawerOpen) return null;
-
   return (
-    <aside
-      role="dialog"
-      aria-label="Your Cart"
-      className="no-print fixed right-3 sm:right-6 bottom-[126px] lg:bottom-22 z-50 w-[calc(100vw-24px)] sm:w-[350px] bg-white text-[#242424] rounded-2xl shadow-[0_22px_60px_rgba(9,9,9,0.28)] border border-[#E7DEC9] overflow-hidden flex flex-col"
-    >
-      {/* Floating Card Header */}
-      <div className="px-4 py-3.5 bg-[#FAF5EE]/80 border-b border-[#EFE6D6] flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <ShoppingCart className="w-4 h-4 text-[#090909]" />
-          <h2 className="text-sm font-bold text-[#090909]">
-            Your Cart ({totalItems})
-          </h2>
-        </div>
-        <button
-          type="button"
-          onClick={closeDrawer}
-          aria-label="Close cart"
-          className="p-1 rounded-lg text-neutral-500 hover:text-[#090909] hover:bg-black/5 transition-colors"
+    <AnimatePresence>
+      {isDrawerOpen && (
+        <motion.aside
+          key="floating-cart-drawer"
+          role="dialog"
+          aria-label="Your Cart"
+          initial={{ opacity: 0, y: 18, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 14, scale: 0.96 }}
+          transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+          className="no-print fixed right-3 sm:right-6 bottom-[126px] lg:bottom-22 z-50 w-[calc(100vw-24px)] sm:w-[350px] bg-white text-[#242424] rounded-2xl shadow-[0_22px_60px_rgba(9,9,9,0.28)] border border-[#E7DEC9] overflow-hidden flex flex-col origin-bottom-right"
         >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-
-      {/* Items List */}
-      <div className="max-h-[260px] sm:max-h-[300px] overflow-y-auto px-4 py-3 divide-y divide-[#F3ECE0]">
-        {items.length === 0 ? (
-          <div className="py-8 text-center">
-            <ShoppingCart className="w-8 h-8 text-[#D4AF5A] mx-auto mb-2" />
-            <p className="text-sm font-semibold text-[#090909] mb-1">Your cart is empty</p>
-            <p className="text-xs text-neutral-500 mb-4">
-              Tap the cart icon on any item to add it here.
-            </p>
+          {/* Floating Card Header */}
+          <div className="px-4 py-3.5 bg-[#FAF5EE]/80 border-b border-[#EFE6D6] flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ShoppingCart className="w-4 h-4 text-[#090909]" />
+              <h2 className="text-sm font-bold text-[#090909]">
+                Your Cart ({totalItems})
+              </h2>
+            </div>
             <button
               type="button"
-              onClick={() => {
-                closeDrawer();
-                navigate('/shop');
-              }}
-              className="px-4 py-2 rounded-lg bg-[#090909] text-[#E8BE62] text-xs font-semibold hover:bg-neutral-800"
+              onClick={closeDrawer}
+              aria-label="Close cart"
+              className="p-1 rounded-lg text-neutral-500 hover:text-[#090909] hover:bg-black/5 transition-colors"
             >
-              Browse Store
+              <X className="w-4 h-4" />
             </button>
           </div>
-        ) : (
-          items.map((item) => (
-            <div key={item.key} className="py-3 first:pt-1 last:pb-1 flex items-start gap-3">
+
+          {/* Items List */}
+          <div className="max-h-[260px] sm:max-h-[300px] overflow-y-auto px-4 py-3 divide-y divide-[#F3ECE0]">
+            {items.length === 0 ? (
+              <div className="py-8 text-center">
+                <ShoppingCart className="w-8 h-8 text-[#D4AF5A] mx-auto mb-2" />
+                <p className="text-sm font-semibold text-[#090909] mb-1">Your cart is empty</p>
+                <p className="text-xs text-neutral-500 mb-4">
+                  Tap the cart icon on any item to add it here.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeDrawer();
+                    navigate('/shop');
+                  }}
+                  className="px-4 py-2 rounded-lg bg-[#090909] text-[#E8BE62] text-xs font-semibold hover:bg-neutral-800 transition-colors"
+                >
+                  Browse Store
+                </button>
+              </div>
+            ) : (
+              <AnimatePresence initial={false}>
+                {items.map((item) => (
+                  <motion.div
+                    key={item.key}
+                    layout="position"
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -12 }}
+                    transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                    className="py-3 first:pt-1 last:pb-1 flex items-start gap-3"
+                  >
+                    <Link
+                      to={`/product/${item.slug}`}
+                      onClick={closeDrawer}
+                      className="w-12 h-14 rounded-lg overflow-hidden bg-[#FAF5EE] border border-[#E7DEC9] shrink-0"
+                    >
+                      <SafeImage
+                        src={item.imageUrl}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </Link>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <Link
+                          to={`/product/${item.slug}`}
+                          onClick={closeDrawer}
+                          className="text-xs font-semibold text-[#090909] hover:text-[#9A7422] leading-snug line-clamp-1"
+                        >
+                          {item.name}
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => removeItem(item.key)}
+                          aria-label={`Remove ${item.name}`}
+                          className="text-neutral-400 hover:text-red-600 transition-colors shrink-0 p-0.5"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1 text-[11px] text-neutral-500">
+                        {item.availableSizes.length > 0 ? (
+                          <select
+                            aria-label="Select size"
+                            value={item.size}
+                            onChange={(e) => updateItemVariant(item.key, { size: e.target.value })}
+                            className="bg-[#FAF5EE] border border-[#E7DEC9] rounded px-1.5 py-0.5 text-[10px] text-[#242424]"
+                          >
+                            {item.availableSizes.map((s) => (
+                              <option key={s} value={s}>
+                                Size: {s}
+                              </option>
+                            ))}
+                          </select>
+                        ) : null}
+                        <span>Qty: {item.quantity}</span>
+                      </div>
+
+                      <div className="flex items-center justify-between mt-1.5">
+                        <span className="text-xs font-bold text-[#090909] tabular-nums">
+                          {formatPrice(item.unitPrice * item.quantity, settings.currency_symbol)}
+                        </span>
+
+                        <div className="inline-flex items-center border border-[#E7DEC9] rounded-md bg-[#FAF5EE]">
+                          <button
+                            type="button"
+                            onClick={() => updateQuantity(item.key, item.quantity - 1)}
+                            aria-label="Decrease quantity"
+                            className="px-1.5 py-0.5 text-neutral-700 hover:text-[#090909]"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <span className="px-1.5 text-[11px] font-semibold tabular-nums">
+                            {item.quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => updateQuantity(item.key, item.quantity + 1)}
+                            aria-label="Increase quantity"
+                            className="px-1.5 py-0.5 text-neutral-700 hover:text-[#090909]"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            )}
+          </div>
+
+          {/* Checkout Footer */}
+          {items.length > 0 && (
+            <div className="p-4 bg-[#FAF5EE]/60 border-t border-[#EFE6D6] space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-neutral-700">Subtotal</span>
+                <span className="text-sm font-bold text-[#090909] tabular-nums">
+                  {formatPrice(subtotal, settings.currency_symbol)}
+                </span>
+              </div>
+
               <Link
-                to={`/product/${item.slug}`}
+                to="/checkout"
                 onClick={closeDrawer}
-                className="w-12 h-14 rounded-lg overflow-hidden bg-[#FAF5EE] border border-[#E7DEC9] shrink-0"
+                className="w-full py-2.5 px-4 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white text-xs sm:text-sm font-semibold transition-colors inline-flex items-center justify-center gap-2 shadow-sm"
               >
-                <SafeImage
-                  src={item.imageUrl}
-                  alt={item.name}
-                  className="w-full h-full object-cover"
-                />
+                <WhatsAppIcon className="w-4 h-4 shrink-0" />
+                <span>Checkout via WhatsApp</span>
               </Link>
 
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2">
-                  <Link
-                    to={`/product/${item.slug}`}
-                    onClick={closeDrawer}
-                    className="text-xs font-semibold text-[#090909] hover:text-[#9A7422] leading-snug line-clamp-1"
-                  >
-                    {item.name}
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => removeItem(item.key)}
-                    aria-label={`Remove ${item.name}`}
-                    className="text-neutral-400 hover:text-red-600 transition-colors shrink-0 p-0.5"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-1.5 mt-1 text-[11px] text-neutral-500">
-                  {item.availableSizes.length > 0 ? (
-                    <select
-                      aria-label="Select size"
-                      value={item.size}
-                      onChange={(e) => updateItemVariant(item.key, { size: e.target.value })}
-                      className="bg-[#FAF5EE] border border-[#E7DEC9] rounded px-1.5 py-0.5 text-[10px] text-[#242424]"
-                    >
-                      {item.availableSizes.map((s) => (
-                        <option key={s} value={s}>
-                          Size: {s}
-                        </option>
-                      ))}
-                    </select>
-                  ) : null}
-                  <span>Qty: {item.quantity}</span>
-                </div>
-
-                <div className="flex items-center justify-between mt-1.5">
-                  <span className="text-xs font-bold text-[#090909] tabular-nums">
-                    {formatPrice(item.unitPrice * item.quantity, settings.currency_symbol)}
-                  </span>
-
-                  <div className="inline-flex items-center border border-[#E7DEC9] rounded-md bg-[#FAF5EE]">
-                    <button
-                      type="button"
-                      onClick={() => updateQuantity(item.key, item.quantity - 1)}
-                      aria-label="Decrease quantity"
-                      className="px-1.5 py-0.5 text-neutral-700 hover:text-[#090909]"
-                    >
-                      <Minus className="w-3 h-3" />
-                    </button>
-                    <span className="px-1.5 text-[11px] font-semibold tabular-nums">
-                      {item.quantity}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => updateQuantity(item.key, item.quantity + 1)}
-                      aria-label="Increase quantity"
-                      className="px-1.5 py-0.5 text-neutral-700 hover:text-[#090909]"
-                    >
-                      <Plus className="w-3 h-3" />
-                    </button>
-                  </div>
-                </div>
+              <div className="flex items-center justify-between text-[10px] text-neutral-500 pt-0.5">
+                <span>Your order will open in WhatsApp with all details</span>
+                <Link
+                  to="/cart"
+                  onClick={closeDrawer}
+                  className="text-[#090909] font-semibold hover:underline shrink-0 ml-2"
+                >
+                  Full Bag
+                </Link>
               </div>
             </div>
-          ))
-        )}
-      </div>
-
-      {/* Checkout Footer */}
-      {items.length > 0 && (
-        <div className="p-4 bg-[#FAF5EE]/60 border-t border-[#EFE6D6] space-y-2.5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-neutral-700">Subtotal</span>
-            <span className="text-sm font-bold text-[#090909] tabular-nums">
-              {formatPrice(subtotal, settings.currency_symbol)}
-            </span>
-          </div>
-
-          <Link
-            to="/checkout"
-            onClick={closeDrawer}
-            className="w-full py-2.5 px-4 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white text-xs sm:text-sm font-semibold transition-colors inline-flex items-center justify-center gap-2 shadow-sm"
-          >
-            <WhatsAppIcon className="w-4 h-4 shrink-0" />
-            <span>Checkout via WhatsApp</span>
-          </Link>
-
-          <div className="flex items-center justify-between text-[10px] text-neutral-500 pt-0.5">
-            <span>Your order will open in WhatsApp with all details</span>
-            <Link
-              to="/cart"
-              onClick={closeDrawer}
-              className="text-[#090909] font-semibold hover:underline shrink-0 ml-2"
-            >
-              Full Bag
-            </Link>
-          </div>
-        </div>
+          )}
+        </motion.aside>
       )}
-    </aside>
+    </AnimatePresence>
   );
 }

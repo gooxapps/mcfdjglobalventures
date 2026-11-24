@@ -311,13 +311,53 @@ export function getPreviewBanners(): Banner[] {
 }
 
 export function getPreviewTestimonials(): Testimonial[] {
-  return [];
+  const now = new Date().toISOString();
+  return [
+    {
+      id: 'preview-test-1',
+      customer_name: 'Amaka Nwosu',
+      customer_role: 'Private Styling Client',
+      location: 'Toronto, Canada',
+      quote:
+        'The Noir Pleated Silk Maxi Dress arrived impeccably tailored. Coordinating sizing and delivery directly on WhatsApp felt effortless and deeply personal.',
+      rating: 5,
+      is_published: true,
+      sort_order: 1,
+      created_at: now,
+    },
+    {
+      id: 'preview-test-2',
+      customer_name: 'Daniel Adeyemi',
+      customer_role: 'Executive Client',
+      location: 'London, United Kingdom',
+      quote:
+        'From the Champagne Contrast-Lapel Blazer to the Milano Loafers, every piece carries unmistakable weight, clean stitching, and refined finish.',
+      rating: 5,
+      is_published: true,
+      sort_order: 2,
+      created_at: now,
+    },
+    {
+      id: 'preview-test-3',
+      customer_name: 'Claire Beaumont',
+      customer_role: 'Wardrobe Collector',
+      location: 'Edmonton, Canada',
+      quote:
+        'MCFD J GLOBAL VENTURES elevates every unboxing into an atelier ritual. Their calfskin handbag and concierge updates are truly unmatched.',
+      rating: 5,
+      is_published: true,
+      sort_order: 3,
+      created_at: now,
+    },
+  ];
 }
 
 export function getPreviewMediaLibrary(): MediaAsset[] {
   const now = new Date().toISOString();
   const entries = [
     { name: 'hero_luxury_atelier.jpg', url: LOCAL_BRAND_ASSETS.heroImage, folder: 'banners', bucket: 'banners' },
+    { name: 'promo_concierge_atelier.jpg', url: LOCAL_BRAND_ASSETS.promoImage, folder: 'banners', bucket: 'banners' },
+    { name: 'editorial_lookbook_banner.jpg', url: LOCAL_BRAND_ASSETS.lookbookImage, folder: 'banners', bucket: 'banners' },
     { name: 'about_atelier_craft.jpg', url: LOCAL_BRAND_ASSETS.aboutImage, folder: 'brand', bucket: 'brand-assets' },
     ...STARTER_LUXURY_PRODUCTS.map((p) => ({
       name: `${p.slug}.jpg`,

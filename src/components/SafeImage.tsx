@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Sparkles } from 'lucide-react';
 
 interface SafeImageProps
@@ -13,9 +13,14 @@ export function SafeImage({
   alt,
   fallbackLabel,
   className = '',
+  loading = 'lazy',
   ...rest
 }: SafeImageProps) {
   const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
 
   if (!src || failed) {
     return (
@@ -37,7 +42,7 @@ export function SafeImage({
       src={src}
       alt={alt}
       referrerPolicy="no-referrer"
-      loading="lazy"
+      loading={loading}
       onError={() => setFailed(true)}
       className={className}
       {...rest}

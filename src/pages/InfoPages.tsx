@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'motion/react';
 import { ArrowRight, Mail, MapPin, MessageCircle, Phone } from 'lucide-react';
 import { useStore } from '@/src/contexts/StoreContext';
 import { LOCAL_BRAND_ASSETS, resolveCategoryImage } from '@/src/lib/defaults';
@@ -28,36 +29,80 @@ export function CollectionsPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-6 sm:py-12 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-7">
-        {categories.map((cat) => (
-          <Link
-            key={cat.id}
-            to={`/shop?category=${encodeURIComponent(cat.slug)}`}
-            className="group bg-white border border-[#E7DEC9] rounded-xl overflow-hidden flex flex-col hover:shadow-lg transition-all"
-          >
-            <div className="aspect-[4/3] overflow-hidden bg-[#F1E8DC]">
-              <SafeImage
-                src={resolveCategoryImage(cat)}
-                alt={cat.name}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-6 sm:py-12 space-y-8 sm:space-y-12">
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          className="grid grid-cols-1 lg:grid-cols-12 rounded-2xl overflow-hidden bg-[#090909] text-white border border-[#D4AF5A]/25"
+        >
+          <div className="lg:col-span-5 p-6 sm:p-10 flex flex-col justify-center">
+            <p className="text-[11px] uppercase tracking-[0.22em] text-[#E8BE62] mb-2">
+              Seasonal Lookbook Edit
+            </p>
+            <h2 className="font-serif text-2xl sm:text-3xl font-semibold mb-3">
+              Architectural Tailoring &amp; Heirloom Leather
+            </h2>
+            <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed mb-5">
+              Each house within MCFD J GLOBAL VENTURES is curated for enduring poise—from fluid Italian silk eveningwear to brushed gold timepieces and structured calfskin bags.
+            </p>
+            <div>
+              <Link
+                to="/shop"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#D4AF5A] text-[#090909] text-xs font-semibold hover:bg-[#E8BE62] transition-colors"
+              >
+                View Complete Store
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
-            <div className="p-3 sm:p-6 flex-1 flex flex-col justify-between">
-              <div>
-                <h2 className="font-serif text-base sm:text-2xl font-semibold text-[#090909] group-hover:text-[#9A7422] transition-colors">
-                  {cat.name}
-                </h2>
-                <p className="text-[11px] sm:text-sm text-neutral-600 mt-1 sm:mt-2 leading-relaxed line-clamp-2 sm:line-clamp-none">
-                  {cat.description}
-                </p>
-              </div>
-              <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-[#090909] mt-3 sm:mt-5">
-                Explore
-                <ArrowRight className="w-3.5 h-3.5 text-[#D4AF5A]" />
-              </span>
-            </div>
-          </Link>
-        ))}
+          </div>
+          <div className="lg:col-span-7 min-h-[200px] sm:min-h-[280px] overflow-hidden">
+            <SafeImage
+              src={LOCAL_BRAND_ASSETS.lookbookImage}
+              alt="MCFD J GLOBAL VENTURES Seasonal Lookbook"
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </motion.div>
+
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-7">
+          {categories.map((cat, idx) => (
+            <motion.div
+              key={cat.id}
+              initial={{ opacity: 0, y: 14 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.12 }}
+              transition={{ duration: 0.38, delay: idx * 0.05, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <Link
+                to={`/shop?category=${encodeURIComponent(cat.slug)}`}
+                className="group bg-white border border-[#E7DEC9] rounded-xl overflow-hidden flex flex-col hover:shadow-lg transition-all h-full"
+              >
+                <div className="aspect-[4/3] overflow-hidden bg-[#F1E8DC]">
+                  <SafeImage
+                    src={resolveCategoryImage(cat)}
+                    alt={cat.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                </div>
+                <div className="p-3 sm:p-6 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h2 className="font-serif text-base sm:text-2xl font-semibold text-[#090909] group-hover:text-[#9A7422] transition-colors">
+                      {cat.name}
+                    </h2>
+                    <p className="text-[11px] sm:text-sm text-neutral-600 mt-1 sm:mt-2 leading-relaxed line-clamp-2 sm:line-clamp-none">
+                      {cat.description}
+                    </p>
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-[#090909] mt-3 sm:mt-5">
+                    Explore
+                    <ArrowRight className="w-3.5 h-3.5 text-[#D4AF5A]" />
+                  </span>
+                </div>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </>
   );
@@ -208,33 +253,42 @@ export function ContactPage() {
           </div>
         </div>
 
-        <div className="bg-[#090909] text-white border border-[#D4AF5A]/30 rounded-xl p-7 flex flex-col justify-between space-y-6">
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-[#E8BE62] mb-2">
-              WhatsApp Personal Shopping
-            </p>
-            <h2 className="font-serif text-2xl font-semibold mb-3">
-              Instant Concierge Assistance
-            </h2>
-            <p className="text-sm text-neutral-300 leading-relaxed">
-              Speak directly with our team for sizing recommendations, international shipping timelines, or custom multi-item orders.
-            </p>
+        <div className="bg-[#090909] text-white border border-[#D4AF5A]/30 rounded-xl overflow-hidden flex flex-col justify-between">
+          <div className="aspect-[16/9] w-full overflow-hidden border-b border-[#D4AF5A]/20">
+            <SafeImage
+              src={LOCAL_BRAND_ASSETS.promoImage}
+              alt="MCFD J GLOBAL VENTURES Private Styling Boutique"
+              className="w-full h-full object-cover"
+            />
           </div>
-          {whatsappConfirmed ? (
-            <a
-              href={waUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-lg bg-[#15803D] text-white text-sm font-semibold hover:bg-[#166534] transition-colors"
-            >
-              <MessageCircle className="w-4 h-4" />
-              Chat on WhatsApp Now
-            </a>
-          ) : (
-            <div className="p-4 rounded-lg bg-white/5 border border-white/10 text-xs text-neutral-300">
-              WhatsApp direct chat is awaiting administrator country code confirmation in Store Settings.
+          <div className="p-7 flex flex-col justify-between flex-1 space-y-6">
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-[#E8BE62] mb-2">
+                WhatsApp Personal Shopping
+              </p>
+              <h2 className="font-serif text-2xl font-semibold mb-3">
+                Instant Concierge Assistance
+              </h2>
+              <p className="text-sm text-neutral-300 leading-relaxed">
+                Speak directly with our team for sizing recommendations, international shipping timelines, or custom multi-item orders.
+              </p>
             </div>
-          )}
+            {whatsappConfirmed ? (
+              <a
+                href={waUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-lg bg-[#15803D] text-white text-sm font-semibold hover:bg-[#166534] transition-colors"
+              >
+                <MessageCircle className="w-4 h-4" />
+                Chat on WhatsApp Now
+              </a>
+            ) : (
+              <div className="p-4 rounded-lg bg-white/5 border border-white/10 text-xs text-neutral-300">
+                WhatsApp direct chat is awaiting administrator country code confirmation in Store Settings.
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </>
