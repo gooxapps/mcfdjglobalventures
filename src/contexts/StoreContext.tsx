@@ -54,6 +54,20 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     refreshStore();
   }, [refreshStore]);
 
+  useEffect(() => {
+    const href =
+      settings.favicon_url && settings.favicon_url.trim().length > 0
+        ? settings.favicon_url.trim()
+        : '/assets/aistudio/image_d50773ba.png';
+    const iconSelectors = ['link[rel="icon"]', 'link[rel="shortcut icon"]', 'link[rel="apple-touch-icon"]'];
+    for (const sel of iconSelectors) {
+      const el = document.querySelector(sel) as HTMLLinkElement | null;
+      if (el) {
+        el.setAttribute('href', href);
+      }
+    }
+  }, [settings.favicon_url]);
+
   return (
     <StoreContext.Provider
       value={{

@@ -1,6 +1,8 @@
 import type { Category, HomepageSection, SiteSettings } from '@/src/types/store';
 
 export const LOCAL_BRAND_ASSETS = {
+  logoImage: '/assets/aistudio/image_d50773ba.png',
+  faviconImage: '/assets/aistudio/image_d50773ba.png',
   heroImage: '/src/assets/images/hero_african_aso_oke_couple_1795571493128.jpg',
   heroLegacyImage: '/src/assets/images/hero_luxury_atelier_1795367867558.jpg',
   aboutImage: '/src/assets/images/about_atelier_craft_1795367867366.jpg',
@@ -24,8 +26,8 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   business_name: 'MCFD J GLOBAL VENTURES',
   brand_name: 'MCFD J',
   tagline: '...Your Style. Your Identity. Custom Made.',
-  logo_url: '',
-  favicon_url: '',
+  logo_url: '/assets/aistudio/image_d50773ba.png',
+  favicon_url: '/assets/aistudio/image_d50773ba.png',
   business_description:
     'African luxury fashion, bespoke Aso Oke, colorful native ready-to-wear attires, group event tailoring, hair & beauty essentials, and custom branded souvenirs delivered worldwide.',
   business_email: 'concierge@mcfdjglobalventures.com',

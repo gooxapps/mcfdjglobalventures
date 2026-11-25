@@ -11,11 +11,13 @@ import {
 } from 'lucide-react';
 import { BrandLogo } from '@/src/components/BrandLogo';
 import { useAdminAuth, type AuthAdminUser } from '@/src/contexts/AdminAuthContext';
+import { useStore } from '@/src/contexts/StoreContext';
 import { useToast } from '@/src/contexts/ToastContext';
 import { apiRequest, fetchBackendStatus, type BackendConfigStatus } from '@/src/lib/apiClient';
 
 export function AdminLoginPage() {
   const { isAuthorizedAdmin, loading, signIn, setAuthenticatedSession } = useAdminAuth();
+  const { settings } = useStore();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -98,7 +100,7 @@ export function AdminLoginPage() {
       <div className="max-w-md w-full mx-auto my-auto space-y-6">
         <div className="text-center space-y-3">
           <div className="inline-block">
-            <BrandLogo variant="dark" size="md" />
+            <BrandLogo variant="dark" size="md" logoUrl={settings.logo_url} />
           </div>
           <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-white">
             Admin Sign In
