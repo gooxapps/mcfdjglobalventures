@@ -1,12 +1,12 @@
 import { del, put } from '@vercel/blob';
-import authHandler from './auth';
+import authHandler from './auth.js';
 import {
   authenticateAdminRequest,
   hasAdminPermission,
   hashPassword,
   writeActivityLog,
   type AdminRoleType,
-} from './_lib/auth';
+} from './_lib/auth.js';
 import {
   dbQuery,
   getPool,
@@ -17,7 +17,7 @@ import {
   withTransaction,
   type ApiRequest,
   type ApiResponse,
-} from './_lib/db';
+} from './_lib/db.js';
 import {
   bulkUpdateAdminProducts,
   deleteAdminAsoOkeEnquiry,
@@ -34,7 +34,7 @@ import {
   updateAdminCustomRequest,
   updateAdminOrder,
   updateSiteSettingsAllowed,
-} from './_lib/storeQueries';
+} from './_lib/storeQueries.js';
 
 const ALLOWED_IMAGE_TYPES = new Set([
   'image/jpeg',

@@ -1,5 +1,5 @@
-import { ensureInitialAdminFromEnv } from './_lib/auth';
-import { getPool, getServerEnv, type ApiRequest, type ApiResponse } from './_lib/db';
+import { ensureInitialAdminFromEnv } from './_lib/auth.js';
+import { getPool, getServerEnv, type ApiRequest, type ApiResponse } from './_lib/db.js';
 
 export default async function handler(req: ApiRequest, res: ApiResponse) {
   if ((req.method || 'GET').toUpperCase() !== 'GET') {

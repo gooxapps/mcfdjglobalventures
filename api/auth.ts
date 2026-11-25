@@ -9,7 +9,7 @@ import {
   verifySameOriginForMutation,
   writeActivityLog,
   type AdminRoleType,
-} from './_lib/auth';
+} from './_lib/auth.js';
 import {
   getPool,
   getQueryParam,
@@ -18,7 +18,7 @@ import {
   withTransaction,
   type ApiRequest,
   type ApiResponse,
-} from './_lib/db';
+} from './_lib/db.js';
 
 function resolveAuthAction(req: ApiRequest): string {
   const fromQuery = getQueryParam(req, '__path');
@@ -275,8 +275,23 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
 
     return res.status(404).json({ error: 'Authentication endpoint not found.' });
   } catch (err) {
+    const pgCode =
+      err && typeof err === 'object' && 'code' in err
+        ? String((err as { code?: unknown }).code || '')
+        : '';
+    if (pgCode === '42P01') {
+      return res.status(500).json({
+        error:
+          'Database tables have not been initialized yet. Run "npm run db:migrate" against your database and try again.',
+      });
+    }
     return res.status(500).json({
-      error: err instanceof Error ? err.message : 'Unexpected authentication server error.',
+      error:
+        err instanceof Error
+          ? err.message
+          : typeof err === 'string'
+          ? err
+          : 'Unexpected authentication server error.',
     });
   }
 }

@@ -1,6 +1,6 @@
 import { put } from '@vercel/blob';
-import { verifySameOriginForMutation } from './_lib/auth';
-import { getPool, getQueryParam, getServerEnv, parseJsonBody, type ApiRequest, type ApiResponse } from './_lib/db';
+import { verifySameOriginForMutation } from './_lib/auth.js';
+import { getPool, getQueryParam, getServerEnv, parseJsonBody, type ApiRequest, type ApiResponse } from './_lib/db.js';
 import {
   addNewsletterSubscriber,
   createAsoOkeEnquiry,
@@ -9,7 +9,7 @@ import {
   getPublishedProductBySlug,
   getPublishedProducts,
   getStorefrontBootstrap,
-} from './_lib/storeQueries';
+} from './_lib/storeQueries.js';
 
 const PUBLIC_SAMPLE_MIME_TYPES = new Set([
   'image/jpeg',

@@ -1,5 +1,8 @@
 import crypto from 'crypto';
-import { Pool, type PoolClient, type QueryResult, type QueryResultRow } from 'pg';
+import pg from 'pg';
+import type { Pool as PgPool, PoolClient, QueryResult, QueryResultRow } from 'pg';
+
+const { Pool } = pg;
 
 export interface ApiRequest {
   method?: string;
@@ -47,12 +50,12 @@ export function getServerEnv() {
 }
 
 declare global {
-  var __mcfdjPgPool: Pool | undefined;
+  var __mcfdjPgPool: PgPool | undefined;
   var __mcfdjPgPoolUrl: string | undefined;
   var __mcfdjJwtFallback: Uint8Array | undefined;
 }
 
-export function getPool(): Pool | null {
+export function getPool(): PgPool | null {
   const { databaseUrl } = getServerEnv();
   if (!databaseUrl) return null;
 
@@ -77,7 +80,7 @@ export function getPool(): Pool | null {
   return pool;
 }
 
-export function requirePool(): Pool {
+export function requirePool(): PgPool {
   const pool = getPool();
   if (!pool) {
     throw new Error('DATABASE_URL is not configured on the server.');

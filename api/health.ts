@@ -1,4 +1,4 @@
-import { getPool, type ApiRequest, type ApiResponse } from './_lib/db';
+import { getPool, type ApiRequest, type ApiResponse } from './_lib/db.js';
 
 export default async function handler(_req: ApiRequest, res: ApiResponse) {
   const pool = getPool();

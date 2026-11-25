@@ -90,6 +90,8 @@ export async function apiRequest<T>(
     const errMsg =
       typeof parsed.error === 'string' && parsed.error
         ? parsed.error
+        : res.status >= 500
+        ? `Server error (${res.status}). Verify your latest code is deployed to Vercel and your database variables are configured.`
         : `Request failed with status ${res.status}.`;
     throw new Error(errMsg);
   }

@@ -7,7 +7,7 @@ import {
   withTransaction,
   type ApiRequest,
   type ApiResponse,
-} from './db';
+} from './db.js';
 
 export type AdminRoleType = 'super_admin' | 'store_manager' | 'content_manager';
 

@@ -1,4 +1,4 @@
-import { getPool, getServerEnv, type ApiRequest, type ApiResponse } from './_lib/db';
+import { getPool, getServerEnv, type ApiRequest, type ApiResponse } from './_lib/db.js';
 
 export default async function handler(req: ApiRequest, res: ApiResponse) {
   const { appUrl } = getServerEnv();

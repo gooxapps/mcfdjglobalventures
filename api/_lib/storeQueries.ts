@@ -1,4 +1,4 @@
-import { dbQuery, getPool, isValidUuid, withTransaction } from './db';
+import { dbQuery, getPool, isValidUuid, withTransaction } from './db.js';
 
 export interface ProductFilterParams {
   search?: string;
