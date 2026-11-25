@@ -6,6 +6,7 @@ import bcrypt from 'bcryptjs';
 import { Pool } from 'pg';
 
 async function main() {
+  const isOptional = process.argv.includes('--optional');
   const databaseUrl = (
     process.env.DATABASE_URL ||
     process.env.POSTGRES_URL ||
@@ -15,6 +16,10 @@ async function main() {
     ''
   ).trim();
   if (!databaseUrl) {
+    if (isOptional) {
+      console.log('DATABASE_URL not set; skipping automatic build-time migration.');
+      return;
+    }
     console.error('ERROR: DATABASE_URL environment variable is required to run migrations.');
     process.exit(1);
   }
@@ -87,8 +92,8 @@ async function main() {
           'SELECT count(*)::int AS cnt FROM public.admin_roles'
         );
         if ((countRes.rows[0]?.cnt ?? 0) === 0) {
-          if (initialPassword.length < 8) {
-            throw new Error('ADMIN_INITIAL_PASSWORD must be at least 8 characters.');
+          if (initialPassword.length < 6) {
+            throw new Error('ADMIN_INITIAL_PASSWORD must be at least 6 characters.');
           }
           const passwordHash = await bcrypt.hash(initialPassword, 12);
           const profileRes = await client.query<{ id: string }>(
