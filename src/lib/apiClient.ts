@@ -5,11 +5,20 @@ export interface BackendConfigStatus {
   jwtConfigured: boolean;
   envBootstrapConfigured: boolean;
   adminExists: boolean;
-  previewAllowed: boolean;
 }
 
 let cachedStatus: BackendConfigStatus | null = null;
 let statusPromise: Promise<BackendConfigStatus> | null = null;
+let inMemoryAdminToken: string | null = null;
+
+export function setAdminSessionToken(token: string | null): void {
+  inMemoryAdminToken = token && token.trim() ? token.trim() : null;
+  cachedStatus = null;
+}
+
+export function getAdminSessionToken(): string | null {
+  return inMemoryAdminToken;
+}
 
 export async function fetchBackendStatus(force = false): Promise<BackendConfigStatus> {
   if (!force && cachedStatus) return cachedStatus;
@@ -27,7 +36,7 @@ export async function fetchBackendStatus(force = false): Promise<BackendConfigSt
         return data;
       }
     } catch {
-      // Static fallback
+      // Fall through to unreachable status
     }
     const fallback: BackendConfigStatus = {
       databaseConfigured: false,
@@ -36,7 +45,6 @@ export async function fetchBackendStatus(force = false): Promise<BackendConfigSt
       jwtConfigured: false,
       envBootstrapConfigured: false,
       adminExists: false,
-      previewAllowed: import.meta.env.DEV,
     };
     cachedStatus = fallback;
     return fallback;
@@ -58,6 +66,9 @@ export async function apiRequest<T>(
     headers.set('Content-Type', 'application/json');
   }
   headers.set('Accept', 'application/json');
+  if (inMemoryAdminToken && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${inMemoryAdminToken}`);
+  }
 
   const res = await fetch(url, {
     ...options,

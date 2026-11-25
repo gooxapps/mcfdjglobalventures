@@ -8,7 +8,7 @@ import type { Product } from '@/src/types/store';
 import { ProductCard } from '@/src/components/ProductCard';
 import { SeoHead } from '@/src/components/SeoHead';
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 24;
 
 export function ShopPage() {
   const { settings, categories, databaseConnected } = useStore();
@@ -91,21 +91,21 @@ export function ShopPage() {
   return (
     <>
       <SeoHead
-        title={`Shop Collection | ${settings.business_name}`}
-        description="Browse luxury women's fashion, men's tailoring, leather handbags, footwear, and fine jewellery at MCFD J GLOBAL VENTURES."
+        title={`Shop Attires & Ready-Made Clothes | ${settings.business_name}`}
+        description="Browse vibrant native attires, colorful Ankara dresses, Senator kaftans, handwoven Aso Oke sets, and ready-made clothes at MCFD J GLOBAL VENTURES."
         canonicalPath="/shop"
       />
 
-      <div className="bg-[#090909] text-white border-b border-[#D4AF5A]/25">
+      <div className="bg-[#250628] text-white border-b border-[#D4AF5A]/25">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
           <p className="text-[10px] sm:text-xs uppercase tracking-[0.24em] text-[#E8BE62] mb-1 sm:mb-2">
             MCFD J GLOBAL VENTURES
           </p>
           <h1 className="font-serif text-2xl sm:text-5xl font-semibold">
-            The Boutique Catalogue
+            Native Attires &amp; Ready-Made Fashion
           </h1>
-          <p className="text-xs sm:text-sm text-neutral-300 mt-1.5 max-w-2xl">
-            Filter by collection, price, or seasonal edit. Add multiple items to your bag and order directly via WhatsApp.
+          <p className="text-xs sm:text-sm text-neutral-200 mt-1.5 max-w-2xl">
+            Explore 20+ bright, colorful native outfits—from Ankara dresses and Senator suits to handwoven Aso Oke and group Aso Ebi sets.
           </p>
         </div>
       </div>

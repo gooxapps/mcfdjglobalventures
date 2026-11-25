@@ -1,40 +1,107 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import {
   ArrowRight,
+  Camera,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Gem,
   Headphones,
-  Mail,
+  MessageCircle,
+  PenTool,
+  Scissors,
   ShieldCheck,
-  ShoppingBag,
   Star,
   Truck,
 } from 'lucide-react';
 import { useStore } from '@/src/contexts/StoreContext';
-import { useToast } from '@/src/contexts/ToastContext';
 import { LOCAL_BRAND_ASSETS, resolveCategoryImage } from '@/src/lib/defaults';
-import {
-  fetchPublishedProducts,
-  subscribeToNewsletter,
-} from '@/src/services/storefrontService';
-import type { Product } from '@/src/types/store';
+import { fetchPublishedProducts } from '@/src/services/storefrontService';
+import type { Category, Product } from '@/src/types/store';
 import { ProductCard } from '@/src/components/ProductCard';
 import { SafeImage } from '@/src/components/SafeImage';
 import { SeoHead } from '@/src/components/SeoHead';
 
+const PRIMARY_SIX_SLUGS = [
+  'mens-fashion',
+  'womens-fashion',
+  'hair-beauty',
+  'aso-oke-traditional',
+  'group-event-outfits',
+  'souvenirs-gifts',
+];
+
+function getCategoryDestination(slug: string): string {
+  if (slug === 'aso-oke-traditional') return '/aso-oke';
+  if (slug === 'group-event-outfits') return '/group-outfits';
+  if (slug === 'souvenirs-gifts') return '/souvenirs';
+  if (slug === 'hair-beauty') return '/beauty';
+  return `/shop?category=${encodeURIComponent(slug)}`;
+}
+
 export function HomePage() {
   const { settings, sections, categories, banners, testimonials, databaseConnected } =
     useStore();
-  const { showToast } = useToast();
 
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
   const [bestSellers, setBestSellers] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
+  const [heroIndex, setHeroIndex] = useState(0);
 
-  const [newsletterEmail, setNewsletterEmail] = useState('');
-  const [subscribing, setSubscribing] = useState(false);
+  const heroSlides = [
+    {
+      kicker: settings.hero_kicker || 'Fashion • Beauty • Customization • Branding',
+      headline: settings.hero_headline || 'Custom Fashion,',
+      highlight: settings.hero_subheadline_highlight || 'Made for You',
+      description:
+        settings.hero_description ||
+        'From stylish outfits to branded souvenirs, we bring your ideas to life with elegance and class.',
+      imageUrl: settings.hero_image_url || LOCAL_BRAND_ASSETS.heroImage,
+      scriptText: settings.hero_script_text || 'Your Vision... Our Creation',
+      primaryText: settings.hero_button_text || 'Explore Collections',
+      primaryUrl: settings.hero_button_url || '/collections',
+      secondaryText: settings.hero_secondary_button_text || 'Request a Custom Design',
+      secondaryUrl: settings.hero_secondary_button_url || '/custom-design',
+    },
+    {
+      kicker: 'Bespoke Aso Oke • Bridal & Party Couture',
+      headline: 'Royal Heritage,',
+      highlight: 'Tailored Today',
+      description:
+        'Hand-loomed Nigerian Aso Oke ensembles and coordinated Aso Ebi party outfits designed for unforgettable celebrations.',
+      imageUrl:
+        settings.aso_oke_banner_image_url || LOCAL_BRAND_ASSETS.asoOkeBannerImage,
+      scriptText: 'Woven with Majesty',
+      primaryText: settings.aso_oke_banner_button_text || 'Shop Aso Oke',
+      primaryUrl: '/aso-oke',
+      secondaryText: 'Group Outfit Enquiry',
+      secondaryUrl: '/group-outfits',
+    },
+    {
+      kicker: 'Your Sample • Precision Embroidery • Worldwide Delivery',
+      headline: 'Your Ideas,',
+      highlight: 'Our Creation',
+      description:
+        'Share a reference photo, choose custom colors or logos, and approve your bespoke outfit or branded souvenir hamper.',
+      imageUrl:
+        settings.custom_design_image_url || LOCAL_BRAND_ASSETS.customCreationImage,
+      scriptText: 'Handcrafted for You',
+      primaryText: 'Explore Souvenirs',
+      primaryUrl: '/souvenirs',
+      secondaryText: settings.custom_design_button_text || 'Request Custom Design',
+      secondaryUrl: '/custom-design',
+    },
+  ];
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setHeroIndex((idx) => (idx + 1) % heroSlides.length);
+    }, 6800);
+    return () => window.clearInterval(timer);
+  }, [heroSlides.length]);
 
   useEffect(() => {
     let active = true;
@@ -42,12 +109,11 @@ export function HomePage() {
       setLoadingProducts(true);
       try {
         const [allPublished, recent, best] = await Promise.all([
-          fetchPublishedProducts({ sortBy: 'newest', limit: 10 }),
+          fetchPublishedProducts({ sortBy: 'newest', limit: 24 }),
           fetchPublishedProducts({ newArrivalsOnly: true, limit: 12 }),
           fetchPublishedProducts({ bestSellersOnly: true, limit: 12 }),
         ]);
         if (!active) return;
-        // Prioritize featured items first, displaying 10 published pieces directly on the homepage
         const orderedHomeProducts = [...allPublished]
           .sort((a, b) => {
             if (a.is_featured === b.is_featured) return 0;
@@ -68,114 +134,52 @@ export function HomePage() {
     };
   }, [databaseConnected]);
 
-  const handleNewsletterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newsletterEmail.trim()) return;
-    setSubscribing(true);
-    try {
-      await subscribeToNewsletter(newsletterEmail);
-      showToast('Thank you for joining the MCFD J GLOBAL VENTURES private client list.');
-      setNewsletterEmail('');
-    } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Unable to subscribe.', 'error');
-    } finally {
-      setSubscribing(false);
-    }
-  };
+  const currentHero = heroSlides[heroIndex % heroSlides.length];
+
+  // Prioritize the 6 signature homepage category cards matching the visual reference
+  const homepageSixCategories: Category[] = (() => {
+    const bySlug = new Map(categories.map((c) => [c.slug, c]));
+    const picked = PRIMARY_SIX_SLUGS.map((slug) => bySlug.get(slug)).filter(
+      (c): c is Category => Boolean(c)
+    );
+    if (picked.length >= 6) return picked.slice(0, 6);
+    const remaining = categories.filter((c) => !PRIMARY_SIX_SLUGS.includes(c.slug));
+    return [...picked, ...remaining].slice(0, 6);
+  })();
+
+  const trustItems = [
+    { icon: Gem, title: 'Premium Quality', subtitle: 'You Can Trust' },
+    { icon: Truck, title: 'Fast & Reliable', subtitle: 'Delivery' },
+    { icon: Headphones, title: 'Dedicated Support', subtitle: 'Always Here' },
+    { icon: ShieldCheck, title: 'Secure Shopping', subtitle: 'Shop with Confidence' },
+  ];
+
+  const processSteps =
+    settings.process_steps && settings.process_steps.length === 4
+      ? settings.process_steps
+      : [
+          { step: 1, title: 'Share Your Idea', subtitle: '(Upload Sample)' },
+          { step: 2, title: 'We Design & Confirm', subtitle: '' },
+          { step: 3, title: 'We Create with Care', subtitle: '' },
+          { step: 4, title: 'You Receive Your Order', subtitle: '' },
+        ];
+
+  const processIcons = [Camera, PenTool, Scissors, CheckCircle2];
 
   const orderedSections = [...sections]
-    .filter((s) => s.is_visible)
+    .filter((s) => s.is_visible && s.section_key !== 'categories')
     .sort((a, b) => a.sort_order - b.sort_order);
 
   const activePromoBanner = banners.find((b) => b.placement === 'promo' && b.is_active);
 
-  const trustItems = [
-    {
-      icon: Gem,
-      title: 'Premium Quality',
-      subtitle: 'Fashion You Can Trust',
-    },
-    {
-      icon: Truck,
-      title: 'Fast & Reliable Delivery',
-      subtitle: 'Worldwide',
-    },
-    {
-      icon: Headphones,
-      title: 'Dedicated Support',
-      subtitle: 'Always Here',
-    },
-    {
-      icon: ShieldCheck,
-      title: 'Secure Shopping',
-      subtitle: 'Shop with Confidence',
-    },
-  ];
-
-  const renderSection = (sectionKey: string, title: string, subtitle: string) => {
-    if (sectionKey === 'categories') {
-      return (
-        <section key={sectionKey} className="max-w-7xl mx-auto px-3 sm:px-6 pt-6 pb-4 sm:py-10">
-          <div className="flex items-center justify-center gap-3 sm:gap-5 mb-4 sm:mb-7">
-            <span className="h-px flex-1 max-w-[48px] sm:max-w-[160px] bg-gradient-to-r from-transparent to-[#D4AF5A]/70" />
-            <h2 className="font-serif text-xl sm:text-3xl font-semibold text-[#090909] text-center">
-              Shop Our <span className="text-[#9A7422]">Collections</span>
-            </h2>
-            <span className="h-px flex-1 max-w-[48px] sm:max-w-[160px] bg-gradient-to-l from-transparent to-[#D4AF5A]/70" />
-          </div>
-
-          {/* Mobile: slim horizontal 1-row category strip; Tablet/Desktop: 5-col editorial grid */}
-          <div className="flex overflow-x-auto gap-2.5 pb-1 snap-x sm:grid sm:grid-cols-3 lg:grid-cols-5 sm:gap-4 sm:overflow-visible sm:pb-0">
-            {categories.map((cat, idx) => (
-              <motion.div
-                key={cat.id}
-                initial={{ opacity: 0, y: 14 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.15 }}
-                transition={{ duration: 0.4, delay: idx * 0.05, ease: [0.16, 1, 0.3, 1] }}
-                className="w-[124px] shrink-0 snap-start sm:w-auto"
-              >
-                <Link
-                  to={`/shop?category=${encodeURIComponent(cat.slug)}`}
-                  className="group relative aspect-[4/3] sm:aspect-[5/4] rounded-xl overflow-hidden bg-[#090909] block shadow-sm border border-[#E7DEC9]/60"
-                >
-                  <SafeImage
-                    src={resolveCategoryImage(cat)}
-                    alt={cat.name}
-                    fallbackLabel={cat.name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/10" />
-                  <div className="absolute inset-x-0 bottom-0 p-2 sm:p-4 flex items-end justify-between gap-1.5">
-                    <div className="min-w-0">
-                      <h3 className="font-serif text-xs sm:text-lg lg:text-xl font-semibold text-white leading-tight truncate">
-                        {cat.name}
-                      </h3>
-                      <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-[#FAF5EE]/90 mt-1 font-medium">
-                        Shop Now
-                        <ArrowRight className="w-3 h-3 text-[#E8BE62]" />
-                      </span>
-                    </div>
-                    <span className="w-5 h-5 sm:w-7 sm:h-7 rounded-full bg-[#D4AF5A] text-[#090909] flex items-center justify-center shrink-0 transition-transform group-hover:translate-x-0.5">
-                      <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                    </span>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-      );
-    }
-
+  const renderDynamicSection = (sectionKey: string, title: string, subtitle: string) => {
     if (sectionKey === 'featured_products') {
       return (
-        <section key={sectionKey} className="max-w-7xl mx-auto px-3 sm:px-6 py-6 sm:py-12">
+        <section key={sectionKey} className="max-w-7xl mx-auto px-3 sm:px-6 py-8 sm:py-12">
           <div className="flex flex-col lg:flex-row lg:items-start gap-5 sm:gap-7">
-            {/* Left Intro Block matching reference storefront design */}
             <div className="lg:w-56 xl:w-60 shrink-0 flex flex-row lg:flex-col items-center lg:items-start justify-between gap-3 lg:pt-2">
               <div>
-                <h2 className="font-serif text-2xl sm:text-3xl font-semibold text-[#090909] leading-tight">
+                <h2 className="font-serif text-2xl sm:text-3xl font-semibold text-[#2B082D] leading-tight">
                   {title || 'Featured Collection'}
                 </h2>
                 <p className="text-xs sm:text-sm text-neutral-600 mt-1.5 leading-relaxed max-w-xs">
@@ -185,16 +189,16 @@ export function HomePage() {
               <div className="flex flex-col items-end lg:items-start gap-2 shrink-0 lg:mt-3">
                 <Link
                   to="/shop"
-                  className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-gradient-to-r from-[#E8BE62] to-[#D4AF5A] text-[#090909] text-xs font-semibold hover:brightness-105 transition-all shadow-sm whitespace-nowrap"
+                  className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-gradient-to-r from-[#E8BE62] to-[#C89635] text-[#250628] text-xs font-bold hover:brightness-105 transition-all shadow-sm whitespace-nowrap"
                 >
                   <span>View All Products</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
                 <Link
                   to="/collections"
-                  className="hidden lg:inline-flex items-center gap-1 text-xs font-medium text-[#9A7422] hover:text-[#090909] transition-colors"
+                  className="hidden lg:inline-flex items-center gap-1 text-xs font-medium text-[#7D4B16] hover:text-[#3B0E3F] transition-colors"
                 >
-                  Browse Store Categories →
+                  Browse All Collections →
                 </Link>
               </div>
             </div>
@@ -205,68 +209,28 @@ export function HomePage() {
                   {[0, 1, 2, 3, 4].map((i) => (
                     <div
                       key={i}
-                      className="bg-white border border-[#E7DEC9] rounded-xl h-56 sm:h-72 animate-pulse"
+                      className="bg-white border border-[#EADCCF] rounded-xl h-56 sm:h-72 animate-pulse"
                     />
                   ))}
                 </div>
-              ) : featuredProducts.length === 0 ? (
-                <div className="bg-white border border-[#E7DEC9] rounded-xl p-6 sm:p-10 text-center">
-                  <p className="font-serif text-xl sm:text-2xl font-semibold text-[#090909] mb-2">
-                    New Season Collection Arriving Shortly
-                  </p>
-                  <p className="text-xs sm:text-sm text-neutral-600 max-w-lg mx-auto mb-5">
-                    Our curated seasonal pieces from MCFD J GLOBAL VENTURES are being prepared for release. Browse our store or reach out to our concierge for private styling.
-                  </p>
-                  <div className="flex flex-wrap items-center justify-center gap-2.5">
-                    <Link
-                      to="/shop"
-                      className="px-5 py-2.5 rounded-lg bg-[#090909] text-white text-xs font-semibold hover:bg-neutral-800 transition-colors"
-                    >
-                      Open Store Catalogue
-                    </Link>
-                    <Link
-                      to="/contact"
-                      className="px-5 py-2.5 rounded-lg border border-[#090909] text-[#090909] text-xs font-semibold hover:bg-[#F1E8DC] transition-colors"
-                    >
-                      Contact Concierge
-                    </Link>
-                  </div>
-                </div>
               ) : (
-                <>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5 sm:gap-4">
-                    {featuredProducts.map((product, idx) => (
-                      <motion.div
-                        key={product.id}
-                        initial={{ opacity: 0, y: 14 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, amount: 0.08 }}
-                        transition={{
-                          duration: 0.35,
-                          delay: Math.min(idx, 5) * 0.04,
-                          ease: [0.16, 1, 0.3, 1],
-                        }}
-                      >
-                        <ProductCard product={product} />
-                      </motion.div>
-                    ))}
-                  </div>
-                  <div className="mt-6 lg:hidden flex flex-wrap items-center justify-center gap-2.5">
-                    <Link
-                      to="/shop"
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#090909] text-[#E8BE62] text-xs font-semibold hover:bg-neutral-800 transition-colors"
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5 sm:gap-4">
+                  {featuredProducts.map((product, idx) => (
+                    <motion.div
+                      key={product.id}
+                      initial={{ opacity: 0, y: 14 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, amount: 0.08 }}
+                      transition={{
+                        duration: 0.35,
+                        delay: Math.min(idx, 5) * 0.04,
+                        ease: [0.16, 1, 0.3, 1],
+                      }}
                     >
-                      Visit Store for More Products
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
-                    <Link
-                      to="/collections"
-                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-[#090909] text-[#090909] text-xs font-semibold hover:bg-[#F1E8DC] transition-colors"
-                    >
-                      Categories
-                    </Link>
-                  </div>
-                </>
+                      <ProductCard product={product} />
+                    </motion.div>
+                  ))}
+                </div>
               )}
             </div>
           </div>
@@ -276,23 +240,26 @@ export function HomePage() {
 
     if (sectionKey === 'new_arrivals' && newArrivals.length > 0) {
       return (
-        <section key={sectionKey} className="max-w-7xl mx-auto px-3 sm:px-6 py-8 sm:py-12 border-t border-[#E5D9C5]">
+        <section
+          key={sectionKey}
+          className="max-w-7xl mx-auto px-3 sm:px-6 py-8 sm:py-12 border-t border-[#EADCCF]"
+        >
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 sm:gap-4 mb-5 sm:mb-8">
             <div>
-              <h2 className="font-serif text-2xl sm:text-4xl font-semibold text-[#090909]">
+              <h2 className="font-serif text-2xl sm:text-4xl font-semibold text-[#2B082D]">
                 {title}
               </h2>
               {subtitle && <p className="text-xs sm:text-sm text-neutral-600 mt-0.5">{subtitle}</p>}
             </div>
             <Link
               to="/shop?filter=new"
-              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-[#090909] hover:text-[#9A7422] whitespace-nowrap"
+              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#3B0E3F] hover:text-[#9A6B19] whitespace-nowrap"
             >
               View New Arrivals
-              <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-6">
             {newArrivals.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
@@ -303,23 +270,26 @@ export function HomePage() {
 
     if (sectionKey === 'best_sellers' && bestSellers.length > 0) {
       return (
-        <section key={sectionKey} className="max-w-7xl mx-auto px-3 sm:px-6 py-8 sm:py-12 border-t border-[#E5D9C5]">
+        <section
+          key={sectionKey}
+          className="max-w-7xl mx-auto px-3 sm:px-6 py-8 sm:py-12 border-t border-[#EADCCF]"
+        >
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 sm:gap-4 mb-5 sm:mb-8">
             <div>
-              <h2 className="font-serif text-2xl sm:text-4xl font-semibold text-[#090909]">
+              <h2 className="font-serif text-2xl sm:text-4xl font-semibold text-[#2B082D]">
                 {title}
               </h2>
               {subtitle && <p className="text-xs sm:text-sm text-neutral-600 mt-0.5">{subtitle}</p>}
             </div>
             <Link
               to="/shop?sort=popular"
-              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-[#090909] hover:text-[#9A7422] whitespace-nowrap"
+              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#3B0E3F] hover:text-[#9A6B19] whitespace-nowrap"
             >
               Shop Best Sellers
-              <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-6">
             {bestSellers.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
@@ -328,58 +298,48 @@ export function HomePage() {
       );
     }
 
-    if (sectionKey === 'promo_banner') {
-      const bannerImg =
-        activePromoBanner?.image_url || LOCAL_BRAND_ASSETS.promoImage;
-      const bannerTitle = activePromoBanner?.title || title;
-      const bannerSubtitle = activePromoBanner?.subtitle || subtitle;
-      const bannerUrl = activePromoBanner?.link_url || '/about';
-      const bannerBtn = activePromoBanner?.button_text || 'Discover Our Atelier';
-
+    if (sectionKey === 'promo_banner' && activePromoBanner) {
       return (
-        <section key={sectionKey} className="max-w-7xl mx-auto px-3 sm:px-6 py-7 sm:py-12">
-          <motion.div
-            initial={{ opacity: 0, y: 18 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.15 }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="bg-[#090909] text-white rounded-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-2 items-stretch border border-[#D4AF5A]/25"
-          >
-            <div className="p-6 sm:p-12 lg:p-14 flex flex-col justify-center">
-              <p className="text-[11px] sm:text-xs uppercase tracking-[0.24em] text-[#E8BE62] mb-2 sm:mb-3">
-                MCFD J GLOBAL VENTURES
+        <section key={sectionKey} className="max-w-7xl mx-auto px-3 sm:px-6 py-6 sm:py-10">
+          <div className="bg-[#2B082D] text-white rounded-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-2 border border-[#D4AF5A]/25">
+            <div className="p-6 sm:p-12 flex flex-col justify-center">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-[#E8BE62] mb-2">
+                {settings.business_name}
               </p>
-              <h2 className="font-serif text-2xl sm:text-4xl font-semibold text-white leading-tight mb-3 sm:mb-4">
-                {bannerTitle}
+              <h2 className="font-serif text-2xl sm:text-4xl font-semibold mb-3">
+                {activePromoBanner.title}
               </h2>
-              <p className="text-xs sm:text-base text-neutral-300 leading-relaxed mb-5 sm:mb-7 max-w-lg">
-                {bannerSubtitle}
+              <p className="text-xs sm:text-base text-neutral-200 leading-relaxed mb-6">
+                {activePromoBanner.subtitle}
               </p>
               <div>
                 <Link
-                  to={bannerUrl}
-                  className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 rounded-full bg-[#D4AF5A] text-[#090909] text-xs sm:text-sm font-semibold hover:bg-[#E8BE62] transition-colors"
+                  to={activePromoBanner.link_url || '/shop'}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-[#E8BE62] to-[#C89635] text-[#250628] text-xs sm:text-sm font-bold"
                 >
-                  {bannerBtn}
+                  {activePromoBanner.button_text || 'Explore'}
                   <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
             </div>
-            <div className="relative min-h-[210px] sm:min-h-[300px] lg:min-h-full overflow-hidden">
+            <div className="min-h-[220px] overflow-hidden">
               <SafeImage
-                src={bannerImg}
-                alt={bannerTitle}
-                className="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.03]"
+                src={activePromoBanner.image_url}
+                alt={activePromoBanner.title}
+                className="w-full h-full object-cover"
               />
             </div>
-          </motion.div>
+          </div>
         </section>
       );
     }
 
     if (sectionKey === 'testimonials' && testimonials.length > 0) {
       return (
-        <section key={sectionKey} className="max-w-7xl mx-auto px-3 sm:px-6 py-8 sm:py-12 border-t border-[#E5D9C5]">
+        <section
+          key={sectionKey}
+          className="max-w-7xl mx-auto px-3 sm:px-6 py-8 sm:py-12 border-t border-[#EADCCF]"
+        >
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -387,7 +347,7 @@ export function HomePage() {
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
             className="text-center max-w-2xl mx-auto mb-6 sm:mb-9"
           >
-            <h2 className="font-serif text-2xl sm:text-4xl font-semibold text-[#090909]">
+            <h2 className="font-serif text-2xl sm:text-4xl font-semibold text-[#2B082D]">
               {title}
             </h2>
             {subtitle && <p className="text-xs sm:text-sm text-neutral-600 mt-1.5">{subtitle}</p>}
@@ -400,7 +360,7 @@ export function HomePage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.15 }}
                 transition={{ duration: 0.4, delay: idx * 0.08, ease: [0.16, 1, 0.3, 1] }}
-                className="bg-white border border-[#E7DEC9] rounded-xl p-5 sm:p-6 flex flex-col justify-between hover:border-[#D4AF5A]/60 transition-colors"
+                className="bg-white border border-[#EADCCF] rounded-xl p-5 sm:p-6 flex flex-col justify-between hover:border-[#D4AF5A] transition-colors shadow-2xs"
               >
                 <div>
                   <div className="flex items-center gap-1 text-[#D4AF5A] mb-3">
@@ -410,8 +370,8 @@ export function HomePage() {
                   </div>
                   <p className="text-xs sm:text-sm text-[#242424] leading-relaxed">“{t.quote}”</p>
                 </div>
-                <footer className="mt-4 pt-3 border-t border-[#F1E8DC] text-xs">
-                  <p className="font-semibold text-[#090909]">{t.customer_name}</p>
+                <footer className="mt-4 pt-3 border-t border-[#F4EAE0] text-xs">
+                  <p className="font-semibold text-[#2B082D]">{t.customer_name}</p>
                   <p className="text-neutral-500">
                     {t.customer_role}
                     {t.location ? ` · ${t.location}` : ''}
@@ -444,114 +404,183 @@ export function HomePage() {
         }}
       />
 
-      {/* Compact Editorial Hero on Mobile / Full Luxury Hero on Desktop */}
-      <section className="relative bg-[#090909] text-white overflow-hidden">
-        <motion.div
-          initial={{ opacity: 0.85, scale: 1.04 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-          className="absolute inset-0"
-        >
-          <SafeImage
-            src={settings.hero_image_url || LOCAL_BRAND_ASSETS.heroImage}
-            alt="MCFD J GLOBAL VENTURES Luxury Fashion Campaign"
-            loading="eager"
-            className="w-full h-full object-cover object-top lg:object-[75%_15%]"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#090909] via-[#090909]/85 sm:via-[#090909]/75 to-[#090909]/30" />
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background:
-                'radial-gradient(circle at 82% 55%, rgba(212,175,90,0.22) 0%, rgba(212,175,90,0) 48%)',
-            }}
-          />
-        </motion.div>
+      {/* 1. ROYAL PURPLE & GOLD AFRICAN FASHION HERO SLIDER */}
+      <section className="relative bg-[#250628] text-white overflow-hidden">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`hero-img-${heroIndex}`}
+            initial={{ opacity: 0.55, scale: 1.03 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0.65 }}
+            transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute inset-0"
+          >
+            <SafeImage
+              src={currentHero.imageUrl}
+              alt={`${currentHero.headline} ${currentHero.highlight}`}
+              loading="eager"
+              className="w-full h-full object-cover object-top lg:object-[72%_18%]"
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  'linear-gradient(95deg, rgba(37,6,40,0.94) 0%, rgba(59,14,63,0.78) 42%, rgba(59,14,63,0.28) 72%, rgba(37,6,40,0.18) 100%)',
+              }}
+            />
+          </motion.div>
+        </AnimatePresence>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-7 sm:py-20 lg:py-28 min-h-[200px] sm:min-h-[460px] lg:min-h-[580px] flex items-center">
-          <div className="max-w-xl">
-            <motion.p
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-              className="text-[10px] sm:text-xs tracking-[0.28em] uppercase text-[#E8BE62] font-medium mb-1.5 sm:mb-4"
-            >
-              {settings.business_name}
-            </motion.p>
-            <motion.h1
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, delay: 0.06, ease: [0.16, 1, 0.3, 1] }}
-              className="font-serif text-2xl sm:text-5xl lg:text-6xl font-semibold leading-[1.08] text-white mb-2 sm:mb-5"
-              style={{ textWrap: 'balance' }}
-            >
-              {settings.hero_headline}
-              <span className="block mt-0.5 sm:mt-1">
-                {(() => {
-                  const parts = (settings.hero_subheadline_highlight || 'Elegance Delivered.').trim().split(/\s+/);
-                  const first = parts[0] || '';
-                  const rest = parts.slice(1).join(' ');
-                  return (
-                    <>
-                      <span className="italic text-[#E8BE62] font-medium">{first}</span>
-                      {rest ? <span className="text-white"> {rest}</span> : null}
-                    </>
-                  );
-                })()}
-              </span>
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
-              className="text-xs sm:text-base text-neutral-200 leading-relaxed max-w-md mb-4 sm:mb-8 line-clamp-2 sm:line-clamp-none"
-            >
-              {settings.hero_description}
-            </motion.p>
+        {/* Left & Right Carousel Navigation Arrows */}
+        <button
+          type="button"
+          onClick={() => setHeroIndex((i) => (i - 1 + heroSlides.length) % heroSlides.length)}
+          aria-label="Previous hero slide"
+          className="hidden sm:flex absolute left-3 lg:left-5 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-black/25 hover:bg-black/45 border border-white/25 text-white items-center justify-center transition-colors cursor-pointer"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => setHeroIndex((i) => (i + 1) % heroSlides.length)}
+          aria-label="Next hero slide"
+          className="hidden sm:flex absolute right-3 lg:right-5 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-black/25 hover:bg-black/45 border border-white/25 text-white items-center justify-center transition-colors cursor-pointer"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
+
+        {/* Hero Typography & Actions */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-10 py-10 sm:py-16 lg:py-24 min-h-[290px] sm:min-h-[450px] lg:min-h-[530px] flex items-center justify-between gap-6">
+          <AnimatePresence mode="wait">
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.18, ease: [0.16, 1, 0.3, 1] }}
-              className="flex flex-wrap items-center gap-2.5 sm:gap-4"
+              key={`hero-copy-${heroIndex}`}
+              initial={{ opacity: 0, x: -16 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 10 }}
+              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+              className="max-w-xl"
             >
-              <Link
-                to={settings.hero_button_url || '/shop'}
-                className="inline-flex items-center gap-2 px-4 sm:px-7 py-2.5 sm:py-3.5 rounded-full bg-gradient-to-r from-[#E8BE62] to-[#D4AF5A] text-[#090909] text-xs sm:text-sm font-semibold hover:brightness-105 transition-all shadow-lg"
+              <span className="inline-block px-3.5 py-1 rounded-full bg-gradient-to-r from-[#F5DC93] via-[#E8BE62] to-[#D4AF5A] text-[#250628] text-[10px] sm:text-xs font-semibold tracking-wide mb-3 sm:mb-4 shadow-sm">
+                {currentHero.kicker}
+              </span>
+
+              <h1
+                className="font-serif text-3xl sm:text-5xl lg:text-6xl font-bold leading-[1.04] text-white mb-2.5 sm:mb-4"
+                style={{ textWrap: 'balance' }}
               >
-                <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                <span>{settings.hero_button_text || 'Shop the Collection'}</span>
-                <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              </Link>
-              <Link
-                to="/collections"
-                className="hidden sm:inline-flex items-center gap-2 px-6 py-3.5 rounded-full border border-white/30 bg-black/30 backdrop-blur-xs text-white text-sm font-medium hover:border-[#D4AF5A] hover:text-[#E8BE62] transition-colors"
-              >
-                Explore Houses
-              </Link>
+                {currentHero.headline}
+                <span className="block italic text-[#E8BE62] mt-0.5 sm:mt-1 font-semibold">
+                  {currentHero.highlight}
+                </span>
+              </h1>
+
+              <p className="text-xs sm:text-base text-[#FAF3E8]/95 leading-relaxed max-w-md mb-5 sm:mb-7">
+                {currentHero.description}
+              </p>
+
+              <div className="flex flex-wrap items-center gap-2.5 sm:gap-3.5">
+                <Link
+                  to={currentHero.primaryUrl}
+                  className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 rounded-full bg-gradient-to-r from-[#F3D88B] via-[#E8BE62] to-[#C89635] text-[#250628] text-xs sm:text-sm font-bold hover:brightness-105 transition-all shadow-lg"
+                >
+                  <span>{currentHero.primaryText}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <Link
+                  to={currentHero.secondaryUrl}
+                  className="inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-full border border-[#E8BE62]/65 bg-[#1B041F]/65 backdrop-blur-xs text-white text-xs sm:text-sm font-semibold hover:border-[#E8BE62] hover:text-[#E8BE62] transition-colors"
+                >
+                  <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#E8BE62]" />
+                  <span>{currentHero.secondaryText}</span>
+                </Link>
+              </div>
             </motion.div>
+          </AnimatePresence>
+
+          {/* Signature Cursive Script Accent on Right Side matching Design Reference */}
+          <div className="hidden lg:flex flex-col items-end justify-center self-center pr-6 select-none pointer-events-none">
+            <p
+              className="font-script text-4xl xl:text-5xl text-[#FCF6E8] leading-[1.05] text-right drop-shadow-[0_3px_14px_rgba(0,0,0,0.65)] max-w-[240px]"
+            >
+              {currentHero.scriptText}
+            </p>
           </div>
+        </div>
+
+        {/* Hero Carousel Dots */}
+        <div className="relative z-10 flex items-center justify-center gap-2 pb-4 sm:pb-5">
+          {heroSlides.map((_, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => setHeroIndex(idx)}
+              aria-label={`View slide ${idx + 1}`}
+              className={`h-2 rounded-full transition-all cursor-pointer ${
+                idx === heroIndex ? 'w-6 bg-[#E8BE62]' : 'w-2 bg-white/50 hover:bg-white/80'
+              }`}
+            />
+          ))}
         </div>
       </section>
 
-      {/* Compact Cream Trust Strip */}
-      <section className="bg-[#FAF5EE] border-b border-[#E5D9C5]">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-6 grid grid-cols-2 lg:grid-cols-4 lg:divide-x divide-[#D4AF5A]/25 gap-x-3 gap-y-2.5 sm:gap-y-4 lg:gap-0">
+      {/* 2. SIX EDITORIAL CATEGORY CARDS ROW */}
+      <section className="max-w-7xl mx-auto px-3 sm:px-6 pt-5 pb-4 sm:pt-7 sm:pb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-3.5">
+          {homepageSixCategories.map((cat, idx) => (
+            <motion.div
+              key={cat.id}
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.12 }}
+              transition={{ duration: 0.35, delay: idx * 0.04, ease: [0.16, 1, 0.3, 1] }}
+              whileHover={{ y: -3 }}
+            >
+              <Link
+                to={getCategoryDestination(cat.slug)}
+                className="group bg-gradient-to-b from-[#FAF0E3] to-[#F3E2CD] border border-[#E7D4BC] hover:border-[#C89635] rounded-xl overflow-hidden shadow-2xs hover:shadow-md transition-all h-full flex flex-col"
+              >
+                <div className="aspect-[4/3] w-full overflow-hidden bg-[#F9EFE3]">
+                  <SafeImage
+                    src={resolveCategoryImage(cat)}
+                    alt={cat.name}
+                    fallbackLabel={cat.name}
+                    className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                  />
+                </div>
+                <div className="px-2.5 py-2.5 sm:py-3 text-center flex-1 flex items-center justify-center">
+                  <h2 className="text-[11px] sm:text-xs font-bold text-[#2D0D31] group-hover:text-[#9A6B19] leading-tight inline-flex items-center justify-center gap-1">
+                    <span>{cat.name}</span>
+                    <ArrowRight className="w-3 h-3 text-[#8E5D1A] shrink-0 transition-transform group-hover:translate-x-0.5" />
+                  </h2>
+                </div>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* 3. FOUR SERVICE BENEFITS BAR */}
+      <section className="bg-[#FAF2E5] border-y border-[#E9DAC5]">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-5 grid grid-cols-2 lg:grid-cols-4 lg:divide-x divide-[#D4AF5A]/30 gap-3 lg:gap-0">
           {trustItems.map((item, idx) => {
             const Icon = item.icon;
             return (
               <motion.div
                 key={item.title}
                 initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35, delay: 0.1 + idx * 0.05, ease: [0.16, 1, 0.3, 1] }}
-                className="flex items-center gap-2 sm:gap-3.5 lg:px-5 lg:first:pl-0"
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.35, delay: idx * 0.05 }}
+                className="flex items-center gap-2.5 sm:gap-3.5 lg:px-5 lg:first:pl-0"
               >
-                <Icon className="w-4 h-4 sm:w-7 sm:h-7 text-[#B89038] shrink-0" strokeWidth={1.6} />
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/75 border border-[#E5D3B6] flex items-center justify-center shrink-0">
+                  <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-[#B8862D]" strokeWidth={1.7} />
+                </div>
                 <div className="min-w-0">
-                  <h3 className="text-[11px] sm:text-sm font-semibold text-[#090909] leading-tight truncate">
+                  <h3 className="text-xs sm:text-sm font-bold text-[#2D0D31] leading-tight truncate">
                     {item.title}
                   </h3>
-                  <p className="text-[10px] sm:text-xs text-neutral-600 truncate">{item.subtitle}</p>
+                  <p className="text-[11px] sm:text-xs text-[#6B5465] truncate">{item.subtitle}</p>
                 </div>
               </motion.div>
             );
@@ -559,41 +588,192 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* Admin-Ordered Dynamic Homepage Sections */}
-      {orderedSections.map((sec) => renderSection(sec.section_key, sec.title, sec.subtitle))}
-
-      {/* Private Client Newsletter */}
-      <section className="bg-[#F1E8DC] border-t border-[#E2D6C1]">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14 text-center">
-          <Mail className="w-6 h-6 text-[#9A7422] mx-auto mb-3" />
-          <h2 className="font-serif text-2xl sm:text-3xl font-semibold text-[#090909] mb-2">
-            Private Client Dispatch
-          </h2>
-          <p className="text-xs sm:text-sm text-neutral-600 mb-6">
-            Receive seasonal lookbooks, limited-edition releases, and private atelier invitations from MCFD J GLOBAL VENTURES.
-          </p>
-          <form
-            onSubmit={handleNewsletterSubmit}
-            className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+      {/* 4. SPLIT SHOWCASE: "YOUR IDEA, OUR CREATION" + "OUR CUSTOMIZATION PROCESS" */}
+      <section className="max-w-7xl mx-auto px-3 sm:px-6 pt-6 pb-4 sm:pt-8 sm:pb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 items-stretch">
+          {/* Left Card: Your Idea, Our Creation */}
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.45 }}
+            className="lg:col-span-6 relative rounded-2xl overflow-hidden bg-[#2B082D] text-white min-h-[240px] sm:min-h-[265px] flex items-center shadow-md border border-[#D4AF5A]/25"
           >
-            <input
-              type="email"
-              required
-              value={newsletterEmail}
-              onChange={(e) => setNewsletterEmail(e.target.value)}
-              placeholder="Enter your email address"
-              className="flex-1 px-4 py-3 rounded-lg bg-white border border-[#D8CBB4] text-sm text-[#090909] focus:outline-none focus:border-[#090909]"
+            <SafeImage
+              src={settings.custom_design_image_url || LOCAL_BRAND_ASSETS.customCreationImage}
+              alt={settings.custom_design_title}
+              className="absolute inset-0 w-full h-full object-cover"
             />
-            <button
-              type="submit"
-              disabled={subscribing}
-              className="px-6 py-3 rounded-lg bg-[#090909] text-white text-sm font-semibold hover:bg-neutral-800 disabled:opacity-60 transition-colors whitespace-nowrap"
-            >
-              {subscribing ? 'Subscribing...' : 'Subscribe'}
-            </button>
-          </form>
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  'linear-gradient(90deg, rgba(37,6,40,0.93) 0%, rgba(59,14,63,0.78) 54%, rgba(59,14,63,0.22) 100%)',
+              }}
+            />
+            <div className="relative z-10 p-6 sm:p-8 max-w-md">
+              <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#F3D88B] mb-2">
+                {settings.custom_design_title || 'Your Idea, Our Creation'}
+              </h2>
+              <p className="text-xs sm:text-sm text-[#FAF3E8]/90 leading-relaxed mb-5">
+                {settings.custom_design_description}
+              </p>
+              <Link
+                to="/custom-design"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-[#E8BE62] to-[#C89635] text-[#250628] text-xs font-bold hover:brightness-105 transition-all shadow-sm"
+              >
+                <span>{settings.custom_design_button_text || 'Request Custom Design'}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </motion.div>
+
+          {/* Right Card: 4-Step Illustrated Customization Process */}
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.45, delay: 0.06 }}
+            className="lg:col-span-6 rounded-2xl border border-[#E5D3EC] p-5 sm:p-7 flex flex-col justify-between shadow-2xs"
+            style={{
+              background:
+                'linear-gradient(135deg, #FBF4FB 0%, #F7EBFA 52%, #EFE0F4 100%)',
+            }}
+          >
+            <div className="flex items-center justify-between gap-2 mb-5">
+              <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#2D0D31]">
+                {settings.process_title || 'Our Customization Process'}
+              </h2>
+              <Link
+                to="/custom-design"
+                className="text-[11px] font-semibold text-[#7E3484] hover:text-[#3B0E3F] whitespace-nowrap"
+              >
+                Start Now →
+              </Link>
+            </div>
+
+            <div className="relative">
+              {/* Connecting gold hairline bar behind badges on sm+ */}
+              <div
+                className="hidden sm:block absolute top-4 left-[12%] right-[12%] h-[2px] bg-gradient-to-r from-[#D4AF5A]/60 via-[#D4AF5A] to-[#D4AF5A]/60"
+                aria-hidden="true"
+              />
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 relative z-10">
+                {processSteps.map((stepItem, idx) => {
+                  const Icon = processIcons[idx % processIcons.length];
+                  return (
+                    <Link
+                      key={stepItem.step}
+                      to="/custom-design"
+                      className="group flex flex-col items-center text-center"
+                    >
+                      <span className="w-8 h-8 rounded-full bg-gradient-to-b from-[#F5DC93] to-[#C89635] text-[#250628] font-bold text-xs flex items-center justify-center shadow-sm mb-3 ring-4 ring-[#FBF4FB]">
+                        {stepItem.step}
+                      </span>
+                      <div className="w-11 h-11 rounded-xl bg-white/85 border border-[#E2CCE8] flex items-center justify-center mb-2.5 text-[#3B0E3F] group-hover:scale-105 group-hover:border-[#C89635] transition-all shadow-2xs">
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <p className="text-[11px] sm:text-xs font-bold text-[#2D0D31] leading-snug">
+                        {stepItem.title}
+                      </p>
+                      {stepItem.subtitle && (
+                        <p className="text-[10px] text-[#6B5465] mt-0.5 leading-tight">
+                          {stepItem.subtitle}
+                        </p>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          </motion.div>
         </div>
       </section>
+
+      {/* 5. DUAL PROMO BANNERS: ASO OKE & PARTY COLLECTIONS | BRANDING & SOUVENIRS */}
+      <section className="max-w-7xl mx-auto px-3 sm:px-6 pb-8 sm:pb-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+          {/* Left Banner: Aso Oke & Party Collections */}
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.45 }}
+            className="relative rounded-2xl overflow-hidden bg-[#3B0E3F] text-white min-h-[210px] sm:min-h-[235px] flex items-center shadow-md border border-[#D4AF5A]/20 group"
+          >
+            <SafeImage
+              src={settings.aso_oke_banner_image_url || LOCAL_BRAND_ASSETS.asoOkeBannerImage}
+              alt={settings.aso_oke_banner_title}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  'linear-gradient(90deg, rgba(64,11,55,0.94) 0%, rgba(90,21,60,0.78) 48%, rgba(64,11,55,0.18) 100%)',
+              }}
+            />
+            <div className="relative z-10 p-6 sm:p-7 max-w-xs">
+              <h2 className="font-serif text-xl sm:text-2xl font-bold text-white leading-tight mb-2">
+                {settings.aso_oke_banner_title || 'Aso Oke & Party Collections'}
+              </h2>
+              <p className="text-xs sm:text-sm text-[#F7ECE2]/90 leading-relaxed mb-4">
+                {settings.aso_oke_banner_description}
+              </p>
+              <Link
+                to="/aso-oke"
+                className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2 rounded-full bg-gradient-to-r from-[#E8BE62] to-[#C89635] text-[#250628] text-xs font-bold hover:brightness-105 transition-all"
+              >
+                <span>{settings.aso_oke_banner_button_text || 'Shop Aso Oke'}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </motion.div>
+
+          {/* Right Banner: Branding & Souvenirs */}
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.45, delay: 0.06 }}
+            className="relative rounded-2xl overflow-hidden bg-[#2B082D] text-white min-h-[210px] sm:min-h-[235px] flex items-center shadow-md border border-[#D4AF5A]/20 group"
+          >
+            <SafeImage
+              src={settings.souvenir_banner_image_url || LOCAL_BRAND_ASSETS.souvenirsBannerImage}
+              alt={settings.souvenir_banner_title}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  'linear-gradient(90deg, rgba(43,8,45,0.95) 0%, rgba(74,18,78,0.8) 50%, rgba(43,8,45,0.22) 100%)',
+              }}
+            />
+            <div className="relative z-10 p-6 sm:p-7 max-w-xs">
+              <h2 className="font-serif text-xl sm:text-2xl font-bold text-white leading-tight mb-2">
+                {settings.souvenir_banner_title || 'Branding & Souvenirs'}
+              </h2>
+              <p className="text-xs sm:text-sm text-[#F7ECE2]/90 leading-relaxed mb-4">
+                {settings.souvenir_banner_description}
+              </p>
+              <Link
+                to="/souvenirs"
+                className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2 rounded-full bg-gradient-to-r from-[#E8BE62] to-[#C89635] text-[#250628] text-xs font-bold hover:brightness-105 transition-all"
+              >
+                <span>{settings.souvenir_banner_button_text || 'Explore Souvenirs'}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* 6. ADMIN-CONTROLLED STOREFRONT PRODUCTS, NEW ARRIVALS & TESTIMONIALS */}
+      {orderedSections.map((sec) =>
+        renderDynamicSection(sec.section_key, sec.title, sec.subtitle)
+      )}
     </>
   );
 }

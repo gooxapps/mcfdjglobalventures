@@ -3,12 +3,18 @@
 @theme {
   --font-serif: "Cormorant Garamond", Georgia, serif;
   --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --font-script: "Great Vibes", "Cormorant Garamond", Georgia, serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
   --color-obsidian: #090909;
+  --color-plum-deep: #250628;
+  --color-plum: #3B0E3F;
+  --color-plum-rich: #4A124E;
+  --color-burgundy: #5E1740;
   --color-champagne: #D4AF5A;
   --color-gold-warm: #E8BE62;
   --color-ivory: #FAF5EE;
+  --color-cream-header: #FCF8F2;
   --color-ivory-muted: #F1E8DC;
   --color-charcoal: #242424;
 }
@@ -24,6 +30,10 @@
   h1, h2, h3, .font-display {
     font-family: var(--font-serif);
   }
+}
+
+.font-script {
+  font-family: var(--font-script);
 }
 
 .tabular-nums {

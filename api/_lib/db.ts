@@ -19,7 +19,14 @@ export interface ApiResponse {
 }
 
 export function getServerEnv() {
-  const databaseUrl = (process.env.DATABASE_URL || '').trim();
+  const databaseUrl = (
+    process.env.DATABASE_URL ||
+    process.env.POSTGRES_URL ||
+    process.env.POSTGRES_PRISMA_URL ||
+    process.env.NEON_DATABASE_URL ||
+    process.env.POSTGRES_URL_NON_POOLING ||
+    ''
+  ).trim();
   const appUrl = (process.env.APP_URL || '').trim();
   const jwtSecret = (process.env.JWT_SECRET || '').trim();
   const adminInitialEmail = (process.env.ADMIN_INITIAL_EMAIL || '').trim().toLowerCase();
@@ -105,9 +112,16 @@ export async function withTransaction<T>(
 }
 
 export function getJwtSecretBytes(): Uint8Array {
-  const { jwtSecret } = getServerEnv();
+  const { jwtSecret, databaseUrl } = getServerEnv();
   if (jwtSecret) {
     return new TextEncoder().encode(jwtSecret);
+  }
+  if (databaseUrl) {
+    const derived = crypto
+      .createHmac('sha256', databaseUrl)
+      .update('mcfdj-session-jwt-v1')
+      .digest();
+    return new Uint8Array(derived);
   }
   if (!globalThis.__mcfdjJwtFallback) {
     globalThis.__mcfdjJwtFallback = crypto.randomBytes(32);

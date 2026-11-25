@@ -85,7 +85,7 @@ export function ProductCard({ product }: ProductCardProps) {
     <motion.article
       whileHover={{ y: -3 }}
       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-      className="group bg-white border border-[#E7DEC9] hover:border-[#D4AF5A]/60 rounded-xl overflow-hidden flex flex-col transition-shadow duration-200 hover:shadow-[0_14px_30px_-12px_rgba(9,9,9,0.14)]"
+      className="group bg-white border border-[#EADCCF] hover:border-[#D4AF5A] rounded-xl overflow-hidden flex flex-col transition-shadow duration-200 hover:shadow-[0_14px_30px_-12px_rgba(59,14,63,0.16)]"
     >
       <Link
         to={`/product/${product.slug}`}
@@ -95,7 +95,7 @@ export function ProductCard({ product }: ProductCardProps) {
           src={product.main_image_url || product.images?.[0]?.url}
           alt={product.name}
           fallbackLabel={product.name}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+          className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.04]"
         />
 
         <motion.button
@@ -103,7 +103,7 @@ export function ProductCard({ product }: ProductCardProps) {
           whileTap={{ scale: 0.85 }}
           onClick={handleToggleWishlist}
           aria-label={wishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
-          className="absolute top-2 left-2 w-7 h-7 rounded-full bg-white/90 backdrop-blur-xs border border-[#E7DEC9] flex items-center justify-center text-[#090909] hover:border-[#D4AF5A] transition-colors shadow-xs opacity-90 sm:opacity-0 sm:group-hover:opacity-100"
+          className="absolute top-2 left-2 w-7 h-7 rounded-full bg-white/90 backdrop-blur-xs border border-[#EADCCF] flex items-center justify-center text-[#3B0E3F] hover:border-[#D4AF5A] transition-colors shadow-xs opacity-90 sm:opacity-0 sm:group-hover:opacity-100"
         >
           <Heart
             className={`w-3.5 h-3.5 ${
@@ -116,12 +116,12 @@ export function ProductCard({ product }: ProductCardProps) {
           <span
             className={`absolute top-2 right-2 px-2.5 py-0.5 text-[10px] font-semibold tracking-wide rounded-full shadow-xs ${
               isOutOfStock
-                ? 'bg-[#090909]/85 text-white'
+                ? 'bg-[#250628]/90 text-white'
                 : singleLabel === 'Sale'
-                ? 'bg-[#DC2626] text-white'
+                ? 'bg-[#8E1B42] text-white'
                 : singleLabel === 'New'
-                ? 'bg-[#E8BE62] text-[#090909]'
-                : 'bg-[#D4AF5A] text-[#090909]'
+                ? 'bg-[#E8BE62] text-[#250628]'
+                : 'bg-[#D4AF5A] text-[#250628]'
             }`}
           >
             {singleLabel}
@@ -129,10 +129,10 @@ export function ProductCard({ product }: ProductCardProps) {
         )}
       </Link>
 
-      <div className="px-3 py-2.5 sm:px-3.5 sm:py-3 flex items-center justify-between gap-2 bg-[#FAF5EE]/40">
+      <div className="px-3 py-2.5 sm:px-3.5 sm:py-3 flex items-center justify-between gap-2 bg-[#FCF8F2]">
         <div className="min-w-0 flex-1">
           <Link to={`/product/${product.slug}`} className="block">
-            <h3 className="text-xs sm:text-[13px] font-semibold text-[#090909] leading-snug group-hover:text-[#9A7422] transition-colors truncate">
+            <h3 className="text-xs sm:text-[13px] font-semibold text-[#2B082D] leading-snug group-hover:text-[#9A6B19] transition-colors truncate">
               {product.name}
             </h3>
           </Link>
@@ -144,12 +144,12 @@ export function ProductCard({ product }: ProductCardProps) {
                 <span className="text-[10px] sm:text-[11px] text-neutral-400 line-through">
                   {formatPrice(product.regular_price, settings.currency_symbol)}
                 </span>
-                <span className="text-xs sm:text-[13px] font-bold text-[#DC2626]">
+                <span className="text-xs sm:text-[13px] font-bold text-[#8E1B42]">
                   {formatPrice(currentPrice, settings.currency_symbol)}
                 </span>
               </>
             ) : (
-              <span className="text-xs sm:text-[13px] font-bold text-[#090909]">
+              <span className="text-xs sm:text-[13px] font-bold text-[#2B082D]">
                 {formatPrice(currentPrice, settings.currency_symbol)}
               </span>
             )}
@@ -165,8 +165,8 @@ export function ProductCard({ product }: ProductCardProps) {
           title={isOutOfStock ? 'Out of stock' : 'Add to cart'}
           className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg border flex items-center justify-center shrink-0 transition-colors shadow-2xs ${
             justAdded
-              ? 'bg-[#16A34A] border-[#16A34A] text-white'
-              : 'border-[#E7DEC9] bg-white text-[#090909] hover:bg-[#090909] hover:text-[#E8BE62] hover:border-[#090909] disabled:opacity-40 disabled:cursor-not-allowed'
+              ? 'bg-[#1EA34D] border-[#1EA34D] text-white'
+              : 'border-[#E6D6BE] bg-white text-[#3B0E3F] hover:bg-[#3B0E3F] hover:text-[#E8BE62] hover:border-[#3B0E3F] disabled:opacity-40 disabled:cursor-not-allowed'
           }`}
         >
           {justAdded ? <Check className="w-4 h-4" /> : <ShoppingCart className="w-4 h-4" />}

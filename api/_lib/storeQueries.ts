@@ -780,12 +780,30 @@ export async function updateSiteSettingsAllowed(updates: Record<string, unknown>
     'og_image_url',
     'announcement_text',
     'promo_messages',
+    'hero_kicker',
     'hero_headline',
     'hero_subheadline_highlight',
     'hero_description',
     'hero_image_url',
+    'hero_script_text',
     'hero_button_text',
     'hero_button_url',
+    'hero_secondary_button_text',
+    'hero_secondary_button_url',
+    'custom_design_title',
+    'custom_design_description',
+    'custom_design_image_url',
+    'custom_design_button_text',
+    'process_title',
+    'process_steps',
+    'aso_oke_banner_title',
+    'aso_oke_banner_description',
+    'aso_oke_banner_image_url',
+    'aso_oke_banner_button_text',
+    'souvenir_banner_title',
+    'souvenir_banner_description',
+    'souvenir_banner_image_url',
+    'souvenir_banner_button_text',
     'about_intro',
     'about_mission',
     'about_vision',
@@ -802,6 +820,7 @@ export async function updateSiteSettingsAllowed(updates: Record<string, unknown>
     'available_currencies',
     'social_links',
     'promo_messages',
+    'process_steps',
     'about_values',
     'footer_links',
   ]);
@@ -845,4 +864,218 @@ export async function listAdminOrders() {
     ORDER BY o.created_at DESC
   `);
   return res.rows.map((r) => normalizeOrderRow(r));
+}
+
+// ============================================================================
+// CUSTOM DESIGN REQUESTS & ASO OKE / GROUP ENQUIRIES
+// ============================================================================
+
+const ALLOWED_INQUIRY_STATUSES = new Set([
+  'New',
+  'In Review',
+  'Quoted',
+  'In Production',
+  'Completed',
+  'Cancelled',
+]);
+
+function normalizeInquiryRow<T extends Record<string, unknown>>(row: T): T & {
+  quantity: number;
+  quoted_amount: number | null;
+  request_reference?: string;
+  enquiry_reference?: string;
+} {
+  return {
+    ...row,
+    quantity: Number(row.quantity ?? 1),
+    quoted_amount:
+      row.quoted_amount !== null && row.quoted_amount !== undefined
+        ? Number(row.quoted_amount)
+        : null,
+  };
+}
+
+export async function createCustomDesignRequest(input: {
+  name: string;
+  email?: string;
+  whatsapp_number: string;
+  customization_type: string;
+  reference_image_url?: string;
+  description: string;
+  quantity: number;
+  event_date?: string;
+  delivery_location: string;
+}) {
+  const cleanName = input.name.trim();
+  const cleanWhatsapp = input.whatsapp_number.trim();
+  const cleanDesc = input.description.trim();
+  if (!cleanName || !cleanWhatsapp || !cleanDesc) {
+    throw new Error('Name, WhatsApp number, and design description are required.');
+  }
+
+  const seqRes = await dbQuery<{ seq: string }>(`SELECT nextval('public.custom_req_seq')::text AS seq`);
+  const ref = `#CDR-${seqRes.rows[0]?.seq || Math.floor(1000 + Math.random() * 9000)}`;
+
+  const res = await dbQuery(
+    `INSERT INTO public.custom_design_requests (
+      request_reference, name, email, whatsapp_number, customization_type,
+      reference_image_url, description, quantity, event_date, delivery_location, status
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'New')
+    RETURNING *`,
+    [
+      ref,
+      cleanName,
+      (input.email || '').trim(),
+      cleanWhatsapp,
+      (input.customization_type || 'Custom Outfit').trim(),
+      (input.reference_image_url || '').trim(),
+      cleanDesc,
+      Math.max(1, Number(input.quantity || 1)),
+      (input.event_date || '').trim(),
+      (input.delivery_location || '').trim(),
+    ]
+  );
+
+  return normalizeInquiryRow(res.rows[0]);
+}
+
+export async function listAdminCustomRequests() {
+  const res = await dbQuery(
+    `SELECT * FROM public.custom_design_requests ORDER BY created_at DESC`
+  );
+  return res.rows.map(normalizeInquiryRow);
+}
+
+export async function updateAdminCustomRequest(
+  id: string,
+  updates: {
+    status?: string;
+    quoted_amount?: number | null;
+    internal_notes?: string;
+  }
+) {
+  const setClauses: string[] = [];
+  const values: unknown[] = [];
+
+  if (typeof updates.status === 'string' && ALLOWED_INQUIRY_STATUSES.has(updates.status)) {
+    values.push(updates.status);
+    setClauses.push(`status = $${values.length}`);
+  }
+  if (updates.quoted_amount !== undefined) {
+    values.push(
+      updates.quoted_amount !== null && !Number.isNaN(Number(updates.quoted_amount))
+        ? Number(updates.quoted_amount)
+        : null
+    );
+    setClauses.push(`quoted_amount = $${values.length}`);
+  }
+  if (typeof updates.internal_notes === 'string') {
+    values.push(updates.internal_notes);
+    setClauses.push(`internal_notes = $${values.length}`);
+  }
+
+  if (setClauses.length === 0) return null;
+  values.push(id);
+  const res = await dbQuery(
+    `UPDATE public.custom_design_requests SET ${setClauses.join(', ')} WHERE id = $${values.length} RETURNING *`,
+    values
+  );
+  return res.rows[0] ? normalizeInquiryRow(res.rows[0]) : null;
+}
+
+export async function deleteAdminCustomRequest(id: string) {
+  await dbQuery(`DELETE FROM public.custom_design_requests WHERE id = $1`, [id]);
+}
+
+export async function createAsoOkeEnquiry(input: {
+  name: string;
+  email?: string;
+  whatsapp_number: string;
+  enquiry_type: string;
+  group_size: string;
+  quantity: number;
+  event_date?: string;
+  delivery_location: string;
+  reference_image_url?: string;
+  notes?: string;
+}) {
+  const cleanName = input.name.trim();
+  const cleanWhatsapp = input.whatsapp_number.trim();
+  if (!cleanName || !cleanWhatsapp) {
+    throw new Error('Name and WhatsApp number are required.');
+  }
+
+  const seqRes = await dbQuery<{ seq: string }>(`SELECT nextval('public.aso_oke_seq')::text AS seq`);
+  const ref = `#ASO-${seqRes.rows[0]?.seq || Math.floor(1000 + Math.random() * 9000)}`;
+
+  const res = await dbQuery(
+    `INSERT INTO public.aso_oke_enquiries (
+      enquiry_reference, name, email, whatsapp_number, enquiry_type,
+      group_size, quantity, event_date, delivery_location, reference_image_url, notes, status
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'New')
+    RETURNING *`,
+    [
+      ref,
+      cleanName,
+      (input.email || '').trim(),
+      cleanWhatsapp,
+      (input.enquiry_type || 'Aso Oke Fabrics').trim(),
+      (input.group_size || '1-10 Guests').trim(),
+      Math.max(1, Number(input.quantity || 1)),
+      (input.event_date || '').trim(),
+      (input.delivery_location || '').trim(),
+      (input.reference_image_url || '').trim(),
+      (input.notes || '').trim(),
+    ]
+  );
+
+  return normalizeInquiryRow(res.rows[0]);
+}
+
+export async function listAdminAsoOkeEnquiries() {
+  const res = await dbQuery(
+    `SELECT * FROM public.aso_oke_enquiries ORDER BY created_at DESC`
+  );
+  return res.rows.map(normalizeInquiryRow);
+}
+
+export async function updateAdminAsoOkeEnquiry(
+  id: string,
+  updates: {
+    status?: string;
+    quoted_amount?: number | null;
+    internal_notes?: string;
+  }
+) {
+  const setClauses: string[] = [];
+  const values: unknown[] = [];
+
+  if (typeof updates.status === 'string' && ALLOWED_INQUIRY_STATUSES.has(updates.status)) {
+    values.push(updates.status);
+    setClauses.push(`status = $${values.length}`);
+  }
+  if (updates.quoted_amount !== undefined) {
+    values.push(
+      updates.quoted_amount !== null && !Number.isNaN(Number(updates.quoted_amount))
+        ? Number(updates.quoted_amount)
+        : null
+    );
+    setClauses.push(`quoted_amount = $${values.length}`);
+  }
+  if (typeof updates.internal_notes === 'string') {
+    values.push(updates.internal_notes);
+    setClauses.push(`internal_notes = $${values.length}`);
+  }
+
+  if (setClauses.length === 0) return null;
+  values.push(id);
+  const res = await dbQuery(
+    `UPDATE public.aso_oke_enquiries SET ${setClauses.join(', ')} WHERE id = $${values.length} RETURNING *`,
+    values
+  );
+  return res.rows[0] ? normalizeInquiryRow(res.rows[0]) : null;
+}
+
+export async function deleteAdminAsoOkeEnquiry(id: string) {
+  await dbQuery(`DELETE FROM public.aso_oke_enquiries WHERE id = $1`, [id]);
 }

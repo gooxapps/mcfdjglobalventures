@@ -11,6 +11,7 @@ import {
   LogOut,
   Menu,
   Package,
+  Palette,
   Settings,
   Shield,
   ShoppingCart,
@@ -59,6 +60,12 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
     badgeKey: 'pendingOrders',
   },
   {
+    label: 'Custom & Aso Oke',
+    to: '/admin/requests',
+    icon: Palette,
+    permission: 'manage_requests',
+  },
+  {
     label: 'Customers',
     to: '/admin/customers',
     icon: Users,
@@ -91,7 +98,7 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
 ];
 
 export function AdminLayout() {
-  const { loading, isAuthorizedAdmin, isPreviewMode, fullName, role, signOut, can } =
+  const { loading, isAuthorizedAdmin, fullName, role, signOut, can } =
     useAdminAuth();
   const { settings } = useStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -101,10 +108,6 @@ export function AdminLayout() {
   useEffect(() => {
     let active = true;
     async function loadPendingCount() {
-      if (isPreviewMode) {
-        if (active) setPendingOrdersCount(3);
-        return;
-      }
       if (!isAuthorizedAdmin) return;
       const count = await fetchPendingOrdersCount();
       if (active) setPendingOrdersCount(count);
@@ -113,7 +116,7 @@ export function AdminLayout() {
     return () => {
       active = false;
     };
-  }, [isAuthorizedAdmin, isPreviewMode, location.pathname]);
+  }, [isAuthorizedAdmin, location.pathname]);
 
   if (loading) {
     return (
@@ -162,9 +165,9 @@ export function AdminLayout() {
         MCFD J Global Ventures
       </p>
       <p className="text-[11px] text-neutral-300 mt-0.5 leading-snug">
-        Fashion Redefined.
+        ...Your Style. Your Identity.
         <br />
-        Elegance Delivered.
+        Custom Made.
       </p>
     </div>
   );
@@ -340,27 +343,7 @@ export function AdminLayout() {
           </div>
         </header>
 
-        {isPreviewMode && (
-          <div className="bg-[#090909] border-b border-[#D4AF5A]/35 px-4 sm:px-8 py-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-[#FAF5EE] no-print">
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 rounded-full bg-[#D4AF5A] text-[#090909] text-[10px] font-bold uppercase tracking-wider shrink-0">
-                Preview Mode
-              </span>
-              <span className="text-neutral-200">
-                Inspecting the MCFD J Admin Dashboard in local development preview mode. Connect Neon PostgreSQL anytime to enable live saves &amp; logins.
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => signOut()}
-              className="text-xs font-semibold text-[#E8BE62] hover:underline whitespace-nowrap self-start sm:self-auto"
-            >
-              Exit Preview
-            </button>
-          </div>
-        )}
-
-        {!settings.whatsapp_country_confirmed && !isPreviewMode && (
+        {!settings.whatsapp_country_confirmed && (
           <div className="bg-amber-50 border-b border-amber-200 px-4 sm:px-8 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 text-xs text-amber-950 no-print">
             <div className="flex items-start sm:items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5 sm:mt-0" />
@@ -386,7 +369,7 @@ export function AdminLayout() {
           <p>
             <span className="text-[#E8BE62] font-semibold">MCFD J Global Ventures</span>
             <span className="mx-2 text-neutral-600">|</span>
-            <span>Fashion Redefined. Elegance Delivered.</span>
+            <span>...Your Style. Your Identity. Custom Made.</span>
           </p>
           <p className="text-[11px] text-neutral-500">
             Developed by Emmanuel Kenny | StaySafelite

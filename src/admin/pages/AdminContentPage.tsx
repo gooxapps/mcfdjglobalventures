@@ -159,6 +159,27 @@ export function AdminContentPage() {
         <div className="bg-white border border-[#E7DEC9] rounded-xl p-6 space-y-5 text-xs">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
+              <label className="block font-semibold mb-1">Hero Eyebrow Pill</label>
+              <input
+                type="text"
+                value={form.hero_kicker}
+                onChange={(e) => setForm((p) => ({ ...p, hero_kicker: e.target.value }))}
+                className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold mb-1">Hero Script Signature Overlay</label>
+              <input
+                type="text"
+                value={form.hero_script_text}
+                onChange={(e) => setForm((p) => ({ ...p, hero_script_text: e.target.value }))}
+                className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 text-sm"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
               <label className="block font-semibold mb-1">Hero Headline</label>
               <input
                 type="text"
@@ -200,7 +221,7 @@ export function AdminContentPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block font-semibold mb-1">Hero Button Text</label>
+              <label className="block font-semibold mb-1">Primary Hero Button Text</label>
               <input
                 type="text"
                 value={form.hero_button_text}
@@ -209,11 +230,33 @@ export function AdminContentPage() {
               />
             </div>
             <div>
-              <label className="block font-semibold mb-1">Hero Button Destination URL</label>
+              <label className="block font-semibold mb-1">Primary Hero Button URL</label>
               <input
                 type="text"
                 value={form.hero_button_url}
                 onChange={(e) => setForm((p) => ({ ...p, hero_button_url: e.target.value }))}
+                className="w-full px-3 py-2 rounded-lg border border-neutral-300 text-sm font-mono"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold mb-1">Secondary Hero Button Text</label>
+              <input
+                type="text"
+                value={form.hero_secondary_button_text}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, hero_secondary_button_text: e.target.value }))
+                }
+                className="w-full px-3 py-2 rounded-lg border border-neutral-300 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold mb-1">Secondary Hero Button URL</label>
+              <input
+                type="text"
+                value={form.hero_secondary_button_url}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, hero_secondary_button_url: e.target.value }))
+                }
                 className="w-full px-3 py-2 rounded-lg border border-neutral-300 text-sm font-mono"
               />
             </div>
@@ -229,6 +272,126 @@ export function AdminContentPage() {
             />
           </div>
 
+          <hr className="border-neutral-200" />
+          <h3 className="font-serif text-xl font-semibold text-[#2D0D31]">
+            Custom Design &amp; Process Banners
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block font-semibold mb-1">Custom Creation Heading</label>
+              <input
+                type="text"
+                value={form.custom_design_title}
+                onChange={(e) => setForm((p) => ({ ...p, custom_design_title: e.target.value }))}
+                className="w-full px-3 py-2 rounded-lg border border-neutral-300 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold mb-1">Custom Creation Button Text</label>
+              <input
+                type="text"
+                value={form.custom_design_button_text}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, custom_design_button_text: e.target.value }))
+                }
+                className="w-full px-3 py-2 rounded-lg border border-neutral-300 text-sm"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block font-semibold mb-1">Custom Creation Description</label>
+            <textarea
+              rows={2}
+              value={form.custom_design_description}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, custom_design_description: e.target.value }))
+              }
+              className="w-full px-3 py-2 rounded-lg border border-neutral-300 text-sm"
+            />
+          </div>
+          <AdminImagePicker
+            label="Your Idea, Our Creation Banner Image"
+            value={form.custom_design_image_url}
+            onChange={(url) => setForm((p) => ({ ...p, custom_design_image_url: url }))}
+            bucket="banners"
+            folder="custom-design"
+          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+            <div className="space-y-3 p-4 rounded-xl bg-[#FAF5EE] border border-[#EADCCF]">
+              <p className="font-semibold text-sm text-[#2D0D31]">Aso Oke &amp; Party Banner</p>
+              <input
+                type="text"
+                value={form.aso_oke_banner_title}
+                onChange={(e) => setForm((p) => ({ ...p, aso_oke_banner_title: e.target.value }))}
+                placeholder="Banner Title"
+                className="w-full px-3 py-2 rounded-lg border border-neutral-300 bg-white"
+              />
+              <textarea
+                rows={2}
+                value={form.aso_oke_banner_description}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, aso_oke_banner_description: e.target.value }))
+                }
+                placeholder="Banner Description"
+                className="w-full px-3 py-2 rounded-lg border border-neutral-300 bg-white"
+              />
+              <input
+                type="text"
+                value={form.aso_oke_banner_button_text}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, aso_oke_banner_button_text: e.target.value }))
+                }
+                placeholder="Button Text"
+                className="w-full px-3 py-2 rounded-lg border border-neutral-300 bg-white"
+              />
+              <AdminImagePicker
+                label="Aso Oke Banner Image"
+                value={form.aso_oke_banner_image_url}
+                onChange={(url) => setForm((p) => ({ ...p, aso_oke_banner_image_url: url }))}
+                bucket="banners"
+                folder="aso-oke"
+              />
+            </div>
+
+            <div className="space-y-3 p-4 rounded-xl bg-[#FAF5EE] border border-[#EADCCF]">
+              <p className="font-semibold text-sm text-[#2D0D31]">Branding &amp; Souvenirs Banner</p>
+              <input
+                type="text"
+                value={form.souvenir_banner_title}
+                onChange={(e) => setForm((p) => ({ ...p, souvenir_banner_title: e.target.value }))}
+                placeholder="Banner Title"
+                className="w-full px-3 py-2 rounded-lg border border-neutral-300 bg-white"
+              />
+              <textarea
+                rows={2}
+                value={form.souvenir_banner_description}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, souvenir_banner_description: e.target.value }))
+                }
+                placeholder="Banner Description"
+                className="w-full px-3 py-2 rounded-lg border border-neutral-300 bg-white"
+              />
+              <input
+                type="text"
+                value={form.souvenir_banner_button_text}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, souvenir_banner_button_text: e.target.value }))
+                }
+                placeholder="Button Text"
+                className="w-full px-3 py-2 rounded-lg border border-neutral-300 bg-white"
+              />
+              <AdminImagePicker
+                label="Souvenirs Banner Image"
+                value={form.souvenir_banner_image_url}
+                onChange={(url) => setForm((p) => ({ ...p, souvenir_banner_image_url: url }))}
+                bucket="banners"
+                folder="souvenirs"
+              />
+            </div>
+          </div>
+
           <div className="flex justify-end">
             <button
               type="button"
@@ -236,21 +399,37 @@ export function AdminContentPage() {
               onClick={() =>
                 saveSettingsPatch(
                   {
+                    hero_kicker: form.hero_kicker,
                     hero_headline: form.hero_headline,
                     hero_subheadline_highlight: form.hero_subheadline_highlight,
                     hero_description: form.hero_description,
                     hero_image_url: form.hero_image_url,
+                    hero_script_text: form.hero_script_text,
                     hero_button_text: form.hero_button_text,
                     hero_button_url: form.hero_button_url,
+                    hero_secondary_button_text: form.hero_secondary_button_text,
+                    hero_secondary_button_url: form.hero_secondary_button_url,
                     announcement_text: form.announcement_text,
+                    custom_design_title: form.custom_design_title,
+                    custom_design_description: form.custom_design_description,
+                    custom_design_image_url: form.custom_design_image_url,
+                    custom_design_button_text: form.custom_design_button_text,
+                    aso_oke_banner_title: form.aso_oke_banner_title,
+                    aso_oke_banner_description: form.aso_oke_banner_description,
+                    aso_oke_banner_image_url: form.aso_oke_banner_image_url,
+                    aso_oke_banner_button_text: form.aso_oke_banner_button_text,
+                    souvenir_banner_title: form.souvenir_banner_title,
+                    souvenir_banner_description: form.souvenir_banner_description,
+                    souvenir_banner_image_url: form.souvenir_banner_image_url,
+                    souvenir_banner_button_text: form.souvenir_banner_button_text,
                   },
-                  'Hero & announcement settings'
+                  'Hero & homepage campaign settings'
                 )
               }
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#090909] text-white font-semibold"
             >
               <Save className="w-4 h-4 text-[#D4AF5A]" />
-              {saving ? 'Saving...' : 'Publish Hero Changes'}
+              {saving ? 'Saving...' : 'Publish Hero & Campaign Changes'}
             </button>
           </div>
         </div>

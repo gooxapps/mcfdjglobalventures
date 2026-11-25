@@ -6,7 +6,9 @@ import {
   getPreviewAdminOrders,
   getPreviewAdminProducts,
   getPreviewAdminUsers,
+  getPreviewAsoOkeEnquiries,
   getPreviewBanners,
+  getPreviewCustomRequests,
   getPreviewDailySeries,
   getPreviewHomepageSections,
   getPreviewMediaLibrary,
@@ -16,10 +18,13 @@ import type {
   ActivityLog,
   AdminRoleType,
   AdminUserRecord,
+  AsoOkeEnquiry,
   Banner,
   Category,
+  CustomDesignRequest,
   Customer,
   HomepageSection,
+  InquiryStatus,
   MediaAsset,
   Order,
   OrderStatus,
@@ -37,7 +42,7 @@ async function isDatabaseLive(): Promise<boolean> {
 async function requireLiveDatabase(): Promise<void> {
   const live = await isDatabaseLive();
   if (!live) {
-    throw new Error('Preview Mode: Configure DATABASE_URL to save live database changes.');
+    throw new Error('Database connection is required. Configure DATABASE_URL on the server.');
   }
 }
 
@@ -519,5 +524,69 @@ export async function updateAdminUserAccess(
   return apiRequest<{ updated: boolean }>(`/api/admin/users/${encodeURIComponent(userId)}`, {
     method: 'PATCH',
     body: JSON.stringify(updates),
+  });
+}
+
+// ============================================================================
+// CUSTOM DESIGN REQUESTS & ASO OKE / GROUP ENQUIRIES
+// ============================================================================
+
+export async function fetchAdminCustomRequests(): Promise<CustomDesignRequest[]> {
+  if (!(await isDatabaseLive())) {
+    return getPreviewCustomRequests();
+  }
+  const data = await apiRequest<{ requests: CustomDesignRequest[] }>('/api/admin/custom-requests');
+  return data.requests || [];
+}
+
+export async function updateAdminCustomRequest(
+  id: string,
+  updates: { status?: InquiryStatus; quoted_amount?: number | null; internal_notes?: string }
+): Promise<CustomDesignRequest> {
+  await requireLiveDatabase();
+  const data = await apiRequest<{ request: CustomDesignRequest }>(
+    `/api/admin/custom-requests/${encodeURIComponent(id)}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    }
+  );
+  return data.request;
+}
+
+export async function deleteAdminCustomRequest(id: string): Promise<void> {
+  await requireLiveDatabase();
+  await apiRequest(`/api/admin/custom-requests/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function fetchAdminAsoOkeEnquiries(): Promise<AsoOkeEnquiry[]> {
+  if (!(await isDatabaseLive())) {
+    return getPreviewAsoOkeEnquiries();
+  }
+  const data = await apiRequest<{ enquiries: AsoOkeEnquiry[] }>('/api/admin/aso-oke-enquiries');
+  return data.enquiries || [];
+}
+
+export async function updateAdminAsoOkeEnquiry(
+  id: string,
+  updates: { status?: InquiryStatus; quoted_amount?: number | null; internal_notes?: string }
+): Promise<AsoOkeEnquiry> {
+  await requireLiveDatabase();
+  const data = await apiRequest<{ enquiry: AsoOkeEnquiry }>(
+    `/api/admin/aso-oke-enquiries/${encodeURIComponent(id)}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    }
+  );
+  return data.enquiry;
+}
+
+export async function deleteAdminAsoOkeEnquiry(id: string): Promise<void> {
+  await requireLiveDatabase();
+  await apiRequest(`/api/admin/aso-oke-enquiries/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
   });
 }

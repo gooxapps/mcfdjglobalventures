@@ -52,6 +52,8 @@ test('bcrypt password hashing and JWT session token signing verify cleanly', asy
   assert.notEqual(hash, 'CoutureAtelier!2026');
   assert.equal(await verifyPassword('CoutureAtelier!2026', hash), true);
   assert.equal(await verifyPassword('WrongPassword', hash), false);
+  const yPrefixHash = hash.startsWith('$2b$') ? `$2y$${hash.slice(4)}` : hash;
+  assert.equal(await verifyPassword('CoutureAtelier!2026', yPrefixHash), true);
 
   const token = await signAdminSessionToken({
     id: 'admin-123',
@@ -67,10 +69,13 @@ test('bcrypt password hashing and JWT session token signing verify cleanly', asy
 
 test('RBAC permissions enforce super_admin, store_manager, and content_manager boundaries', () => {
   assert.equal(hasAdminPermission('super_admin', 'manage_admins'), true);
+  assert.equal(hasAdminPermission('super_admin', 'manage_requests'), true);
   assert.equal(hasAdminPermission('store_manager', 'manage_products'), true);
+  assert.equal(hasAdminPermission('store_manager', 'manage_requests'), true);
   assert.equal(hasAdminPermission('store_manager', 'manage_admins'), false);
   assert.equal(hasAdminPermission('content_manager', 'manage_content'), true);
   assert.equal(hasAdminPermission('content_manager', 'manage_orders'), false);
+  assert.equal(hasAdminPermission('content_manager', 'manage_requests'), false);
 });
 
 test('API handlers respond safely for /api/health, /api/config-status, /api/auth/me, and reject unauthenticated /api/admin calls', async () => {
@@ -84,6 +89,7 @@ test('API handlers respond safely for /api/health, /api/config-status, /api/auth
   await configStatusHandler({ method: 'GET', headers: {} } as ApiRequest, configMock.res);
   assert.equal(configMock.getStatus(), 200);
   assert.equal(typeof configMock.getBody().databaseConfigured, 'boolean');
+  assert.equal(configMock.getBody().previewAllowed, false);
 
   const meMock = createMockRes();
   await authHandler(
@@ -125,9 +131,21 @@ test('API handlers respond safely for /api/health, /api/config-status, /api/auth
     adminMock.res
   );
   assert.ok(adminMock.getStatus() === 401 || adminMock.getStatus() === 503);
+
+  const adminReqMock = createMockRes();
+  await adminHandler(
+    {
+      method: 'GET',
+      url: '/api/admin/custom-requests',
+      headers: {},
+      query: { __path: 'custom-requests' },
+    } as ApiRequest,
+    adminReqMock.res
+  );
+  assert.ok(adminReqMock.getStatus() === 401 || adminReqMock.getStatus() === 503);
 });
 
-test('Neon PostgreSQL migrations cover all 17 tables, schema_migrations tracking, and zero Supabase remnants', () => {
+test('Neon PostgreSQL migrations cover all 19 tables, schema_migrations tracking, and zero Supabase remnants', () => {
   const root = process.cwd();
   const schemaSql = fs.readFileSync(
     path.join(root, 'migrations/001_initial_schema.sql'),
@@ -139,6 +157,14 @@ test('Neon PostgreSQL migrations cover all 17 tables, schema_migrations tracking
   );
   const prodSql = fs.readFileSync(
     path.join(root, 'migrations/003_seed_starter_products.sql'),
+    'utf-8'
+  );
+  const redesignSql = fs.readFileSync(
+    path.join(root, 'migrations/004_redesign_catalog_and_requests.sql'),
+    'utf-8'
+  );
+  const attiresSql = fs.readFileSync(
+    path.join(root, 'migrations/005_native_fashion_attires_catalog.sql'),
     'utf-8'
   );
   const migrateScript = fs.readFileSync(path.join(root, 'scripts/migrate.ts'), 'utf-8');
@@ -172,11 +198,14 @@ test('Neon PostgreSQL migrations cover all 17 tables, schema_migrations tracking
     );
   }
 
+  assert.ok(redesignSql.includes('public.custom_design_requests'));
+  assert.ok(redesignSql.includes('public.aso_oke_enquiries'));
+  assert.ok(attiresSql.includes('emerald-sunburst-ankara-peplum-gown'));
   assert.ok(migrateScript.includes('public.schema_migrations'));
   assert.equal(pkgJson.toLowerCase().includes('supabase'), false);
   assert.equal(metadataJson.toLowerCase().includes('supabase'), false);
 
-  const combined = `${schemaSql}\n${seedSql}\n${prodSql}`.toLowerCase();
+  const combined = `${schemaSql}\n${seedSql}\n${prodSql}\n${redesignSql}\n${attiresSql}`.toLowerCase();
   assert.equal(combined.includes('auth.users'), false);
   assert.equal(combined.includes('storage.buckets'), false);
   assert.equal(combined.includes('supabase'), false);

@@ -16,6 +16,7 @@ export type AdminPermission =
   | 'manage_products'
   | 'manage_categories'
   | 'manage_orders'
+  | 'manage_requests'
   | 'manage_customers'
   | 'manage_content'
   | 'manage_media'
@@ -29,6 +30,7 @@ export const ROLE_PERMISSIONS: Record<AdminRoleType, AdminPermission[]> = {
     'manage_products',
     'manage_categories',
     'manage_orders',
+    'manage_requests',
     'manage_customers',
     'manage_content',
     'manage_media',
@@ -41,6 +43,7 @@ export const ROLE_PERMISSIONS: Record<AdminRoleType, AdminPermission[]> = {
     'manage_products',
     'manage_categories',
     'manage_orders',
+    'manage_requests',
     'manage_customers',
     'manage_media',
     'view_activity_logs',
@@ -68,8 +71,9 @@ export async function hashPassword(plain: string): Promise<string> {
 }
 
 export async function verifyPassword(plain: string, hash: string): Promise<boolean> {
-  if (!hash) return false;
-  return bcrypt.compare(plain, hash);
+  if (!hash || !plain) return false;
+  const normalizedHash = hash.startsWith('$2y$') ? `$2b$${hash.slice(4)}` : hash;
+  return bcrypt.compare(plain, normalizedHash);
 }
 
 export async function signAdminSessionToken(user: AuthenticatedAdmin): Promise<string> {
@@ -205,7 +209,7 @@ export async function ensureInitialAdminFromEnv(): Promise<void> {
 
   const { adminInitialEmail, adminInitialPassword } = getServerEnv();
   if (!adminInitialEmail || !adminInitialPassword) return;
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(adminInitialEmail) || adminInitialPassword.length < 8) {
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(adminInitialEmail) || adminInitialPassword.length < 6) {
     return;
   }
 

@@ -6,7 +6,14 @@ import bcrypt from 'bcryptjs';
 import { Pool } from 'pg';
 
 async function main() {
-  const databaseUrl = (process.env.DATABASE_URL || '').trim();
+  const databaseUrl = (
+    process.env.DATABASE_URL ||
+    process.env.POSTGRES_URL ||
+    process.env.POSTGRES_PRISMA_URL ||
+    process.env.NEON_DATABASE_URL ||
+    process.env.POSTGRES_URL_NON_POOLING ||
+    ''
+  ).trim();
   if (!databaseUrl) {
     console.error('ERROR: DATABASE_URL environment variable is required to run migrations.');
     process.exit(1);

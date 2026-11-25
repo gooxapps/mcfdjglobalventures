@@ -158,6 +158,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       return res.status(201).json({
         message: 'Initial Super Administrator created successfully.',
         user: result.user,
+        token,
       });
     }
 
@@ -193,7 +194,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
         `SELECT p.id, p.email, p.password_hash, p.full_name, ar.role, ar.is_active
          FROM public.profiles p
          INNER JOIN public.admin_roles ar ON ar.user_id = p.id
-         WHERE p.email = $1
+         WHERE LOWER(p.email) = $1
          LIMIT 1`,
         [email]
       );
@@ -224,7 +225,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
         description: `Administrator ${caller.email} signed in.`,
       });
 
-      return res.status(200).json({ user: caller });
+      return res.status(200).json({ user: caller, token });
     }
 
     if (action === 'change-password' && method === 'POST') {

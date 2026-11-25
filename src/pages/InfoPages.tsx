@@ -15,16 +15,16 @@ export function CollectionsPage() {
     <>
       <SeoHead
         title={`Collections | ${settings.business_name}`}
-        description="Explore curated luxury fashion collections across Women's Fashion, Men's Fashion, Handbags, Footwear, and Fine Jewellery."
+        description="Explore curated African fashion collections across Women's Native Attires, Men's Senator & Agbada Suits, Handwoven Aso Oke, and Group Outfits."
         canonicalPath="/collections"
       />
-      <div className="bg-[#090909] text-white border-b border-[#D4AF5A]/25">
+      <div className="bg-[#250628] text-white border-b border-[#D4AF5A]/25">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
           <p className="text-xs uppercase tracking-[0.24em] text-[#E8BE62] mb-2">
             MCFD J GLOBAL VENTURES
           </p>
           <h1 className="font-serif text-4xl sm:text-5xl font-semibold">
-            Fashion Houses &amp; Collections
+            Fashion Houses &amp; Attire Collections
           </h1>
         </div>
       </div>
@@ -34,24 +34,24 @@ export function CollectionsPage() {
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-          className="grid grid-cols-1 lg:grid-cols-12 rounded-2xl overflow-hidden bg-[#090909] text-white border border-[#D4AF5A]/25"
+          className="grid grid-cols-1 lg:grid-cols-12 rounded-2xl overflow-hidden bg-[#250628] text-white border border-[#D4AF5A]/25"
         >
           <div className="lg:col-span-5 p-6 sm:p-10 flex flex-col justify-center">
             <p className="text-[11px] uppercase tracking-[0.22em] text-[#E8BE62] mb-2">
               Seasonal Lookbook Edit
             </p>
             <h2 className="font-serif text-2xl sm:text-3xl font-semibold mb-3">
-              Architectural Tailoring &amp; Heirloom Leather
+              Vibrant Native Attires &amp; Ready-Made Couture
             </h2>
-            <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed mb-5">
-              Each house within MCFD J GLOBAL VENTURES is curated for enduring poise—from fluid Italian silk eveningwear to brushed gold timepieces and structured calfskin bags.
+            <p className="text-xs sm:text-sm text-neutral-200 leading-relaxed mb-5">
+              Each garment at MCFD J GLOBAL VENTURES celebrates bold African color and heritage craft—from hand-loomed Aso Oke and beaded French lace to bright ready-made Ankara and Senator suits.
             </p>
             <div>
               <Link
                 to="/shop"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#D4AF5A] text-[#090909] text-xs font-semibold hover:bg-[#E8BE62] transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#D4AF5A] text-[#250628] text-xs font-semibold hover:bg-[#E8BE62] transition-colors"
               >
-                View Complete Store
+                View All 20 Attires
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>

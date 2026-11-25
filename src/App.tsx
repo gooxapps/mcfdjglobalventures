@@ -23,6 +23,12 @@ import {
   ContactPage,
   PolicyPage,
 } from '@/src/pages/InfoPages';
+import { CustomDesignPage } from '@/src/pages/CustomDesignPage';
+import {
+  AsoOkeAndGroupPage,
+  BeautyPage,
+  SouvenirsPage,
+} from '@/src/pages/SpecialtyPages';
 
 import { AdminLayout } from '@/src/admin/layouts/AdminLayout';
 import { AdminLoginPage } from '@/src/admin/pages/AdminLoginPage';
@@ -30,6 +36,7 @@ import { AdminDashboardPage } from '@/src/admin/pages/AdminDashboardPage';
 import { AdminProductsPage } from '@/src/admin/pages/AdminProductsPage';
 import { AdminCategoriesPage } from '@/src/admin/pages/AdminCategoriesPage';
 import { AdminOrdersPage } from '@/src/admin/pages/AdminOrdersPage';
+import { AdminRequestsPage } from '@/src/admin/pages/AdminRequestsPage';
 import { AdminCustomersPage } from '@/src/admin/pages/AdminCustomersPage';
 import { AdminContentPage } from '@/src/admin/pages/AdminContentPage';
 import { AdminMediaPage } from '@/src/admin/pages/AdminMediaPage';
@@ -83,6 +90,11 @@ export default function App() {
                     <Route path="/" element={<HomePage />} />
                     <Route path="/shop" element={<ShopPage />} />
                     <Route path="/collections" element={<CollectionsPage />} />
+                    <Route path="/custom-design" element={<CustomDesignPage />} />
+                    <Route path="/aso-oke" element={<AsoOkeAndGroupPage mode="aso-oke" />} />
+                    <Route path="/group-outfits" element={<AsoOkeAndGroupPage mode="group" />} />
+                    <Route path="/souvenirs" element={<SouvenirsPage />} />
+                    <Route path="/beauty" element={<BeautyPage />} />
                     <Route path="/product/:slug" element={<ProductDetailPage />} />
                     <Route path="/cart" element={<CartPage />} />
                     <Route path="/checkout" element={<CheckoutPage />} />
@@ -127,6 +139,14 @@ export default function App() {
                       element={
                         <RequirePermission permission="manage_orders">
                           <AdminOrdersPage />
+                        </RequirePermission>
+                      }
+                    />
+                    <Route
+                      path="requests"
+                      element={
+                        <RequirePermission permission="manage_requests">
+                          <AdminRequestsPage />
                         </RequirePermission>
                       }
                     />

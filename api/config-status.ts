@@ -13,7 +13,6 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     jwtSecret,
     adminInitialEmail,
     adminInitialPassword,
-    isProduction,
   } = getServerEnv();
   const pool = getPool();
 
@@ -41,6 +40,6 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     jwtConfigured: Boolean(jwtSecret),
     envBootstrapConfigured: Boolean(adminInitialEmail && adminInitialPassword),
     adminExists,
-    previewAllowed: !isProduction && !databaseUrl,
+    previewAllowed: false,
   });
 }

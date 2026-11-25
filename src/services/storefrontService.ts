@@ -5,12 +5,16 @@ import {
   DEFAULT_SITE_SETTINGS,
 } from '@/src/lib/defaults';
 import {
+  addPreviewAsoOkeEnquiry,
+  addPreviewCustomRequest,
   getPreviewAdminProducts,
   getPreviewTestimonials,
 } from '@/src/lib/adminPreviewData';
 import type {
+  AsoOkeEnquiry,
   Banner,
   Category,
+  CustomDesignRequest,
   HomepageSection,
   Product,
   SiteSettings,
@@ -251,4 +255,141 @@ export async function subscribeToNewsletter(email: string): Promise<void> {
     method: 'POST',
     body: JSON.stringify({ email }),
   });
+}
+
+const PUBLIC_SAMPLE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif']);
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === 'string') resolve(reader.result);
+      else reject(new Error('Unable to read selected image file.'));
+    };
+    reader.onerror = () => reject(new Error('Unable to read selected image file.'));
+    reader.readAsDataURL(file);
+  });
+}
+
+export async function uploadPublicSampleImage(file: File): Promise<string> {
+  if (!PUBLIC_SAMPLE_TYPES.has(file.type)) {
+    throw new Error('Please upload a JPG, PNG, WebP, or AVIF image.');
+  }
+  if (file.size > 6 * 1024 * 1024) {
+    throw new Error('Reference sample image must be 6MB or smaller.');
+  }
+
+  const dataBase64 = await fileToDataUrl(file);
+  const status = await fetchBackendStatus();
+
+  if (!status.databaseConfigured || !status.databaseReachable || !status.blobConfigured) {
+    // Return local object data URL in preview/local mode so the preview thumbnail & request still work seamlessly
+    return dataBase64;
+  }
+
+  const res = await apiRequest<{ public_url: string }>('/api/storefront/upload-sample', {
+    method: 'POST',
+    body: JSON.stringify({
+      fileName: file.name,
+      mimeType: file.type,
+      dataBase64,
+    }),
+  });
+  return res.public_url;
+}
+
+export interface SubmitCustomDesignInput {
+  name: string;
+  email?: string;
+  whatsapp_number: string;
+  customization_type: string;
+  reference_image_url?: string;
+  description: string;
+  quantity: number;
+  event_date?: string;
+  delivery_location: string;
+}
+
+export async function submitCustomDesignRequest(
+  input: SubmitCustomDesignInput
+): Promise<{ request: CustomDesignRequest; previewMode: boolean }> {
+  const status = await fetchBackendStatus();
+  if (!status.databaseConfigured || !status.databaseReachable) {
+    const now = new Date().toISOString();
+    const previewRecord: CustomDesignRequest = {
+      id: `preview-cdr-${Date.now()}`,
+      request_reference: `#CDR-${Math.floor(1010 + Math.random() * 8900)}`,
+      name: input.name.trim(),
+      email: (input.email || '').trim(),
+      whatsapp_number: input.whatsapp_number.trim(),
+      customization_type: input.customization_type,
+      reference_image_url: input.reference_image_url || '',
+      description: input.description.trim(),
+      quantity: Math.max(1, Number(input.quantity || 1)),
+      event_date: input.event_date || '',
+      delivery_location: input.delivery_location.trim(),
+      status: 'New',
+      quoted_amount: null,
+      internal_notes: 'Recorded in local preview mode.',
+      created_at: now,
+      updated_at: now,
+    };
+    addPreviewCustomRequest(previewRecord);
+    return { request: previewRecord, previewMode: true };
+  }
+
+  const res = await apiRequest<{ request: CustomDesignRequest }>('/api/storefront/custom-design', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+  return { request: res.request, previewMode: false };
+}
+
+export interface SubmitAsoOkeEnquiryInput {
+  name: string;
+  email?: string;
+  whatsapp_number: string;
+  enquiry_type: string;
+  group_size: string;
+  quantity: number;
+  event_date?: string;
+  delivery_location: string;
+  reference_image_url?: string;
+  notes?: string;
+}
+
+export async function submitAsoOkeEnquiry(
+  input: SubmitAsoOkeEnquiryInput
+): Promise<{ enquiry: AsoOkeEnquiry; previewMode: boolean }> {
+  const status = await fetchBackendStatus();
+  if (!status.databaseConfigured || !status.databaseReachable) {
+    const now = new Date().toISOString();
+    const previewRecord: AsoOkeEnquiry = {
+      id: `preview-aso-${Date.now()}`,
+      enquiry_reference: `#ASO-${Math.floor(1010 + Math.random() * 8900)}`,
+      name: input.name.trim(),
+      email: (input.email || '').trim(),
+      whatsapp_number: input.whatsapp_number.trim(),
+      enquiry_type: input.enquiry_type,
+      group_size: input.group_size,
+      quantity: Math.max(1, Number(input.quantity || 1)),
+      event_date: input.event_date || '',
+      delivery_location: input.delivery_location.trim(),
+      reference_image_url: input.reference_image_url || '',
+      notes: (input.notes || '').trim(),
+      status: 'New',
+      quoted_amount: null,
+      internal_notes: 'Recorded in local preview mode.',
+      created_at: now,
+      updated_at: now,
+    };
+    addPreviewAsoOkeEnquiry(previewRecord);
+    return { enquiry: previewRecord, previewMode: true };
+  }
+
+  const res = await apiRequest<{ enquiry: AsoOkeEnquiry }>('/api/storefront/aso-oke-enquiry', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+  return { enquiry: res.enquiry, previewMode: false };
 }

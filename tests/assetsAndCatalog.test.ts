@@ -14,6 +14,8 @@ import {
   getPreviewAdminCustomers,
   getPreviewAdminOrders,
   getPreviewAdminProducts,
+  getPreviewAsoOkeEnquiries,
+  getPreviewCustomRequests,
   getPreviewMediaLibrary,
   getPreviewTestimonials,
 } from '../src/lib/adminPreviewData';
@@ -35,11 +37,14 @@ function assertValidLocalJpeg(relativeWebPath: string) {
   assert.equal(buf[2], 0xff, `Invalid JPEG header byte 2 for ${diskPath}`);
 }
 
-test('all brand, category, and promo editorial images exist on disk as valid JPEGs', () => {
+test('all brand, category, custom creation, Aso Oke, and souvenir images exist on disk as valid JPEGs', () => {
   assertValidLocalJpeg(LOCAL_BRAND_ASSETS.heroImage);
   assertValidLocalJpeg(LOCAL_BRAND_ASSETS.aboutImage);
   assertValidLocalJpeg(LOCAL_BRAND_ASSETS.promoImage);
   assertValidLocalJpeg(LOCAL_BRAND_ASSETS.lookbookImage);
+  assertValidLocalJpeg(LOCAL_BRAND_ASSETS.customCreationImage);
+  assertValidLocalJpeg(LOCAL_BRAND_ASSETS.souvenirsBannerImage);
+  assertValidLocalJpeg(LOCAL_BRAND_ASSETS.asoOkeBannerImage);
 
   for (const [slug, assetUrl] of Object.entries(LOCAL_BRAND_ASSETS.categoryImages)) {
     assert.ok(slug.length > 0);
@@ -47,10 +52,11 @@ test('all brand, category, and promo editorial images exist on disk as valid JPE
   }
 });
 
-test('all 10 starter luxury products have valid unique SKUs, slugs, pricing, categories, and JPEG assets', () => {
-  assert.equal(STARTER_LUXURY_PRODUCTS.length, 10);
+test('all 20 starter native attire products have valid unique SKUs, slugs, pricing, categories, and JPEG assets', () => {
+  assert.equal(STARTER_LUXURY_PRODUCTS.length, 20);
 
   const validCategorySlugs = new Set(DEFAULT_CATEGORIES_FALLBACK.map((c) => c.slug));
+  const excludedCategories = new Set(['bags-accessories', 'footwear', 'jewellery']);
   const seenSkus = new Set<string>();
   const seenSlugs = new Set<string>();
 
@@ -61,6 +67,11 @@ test('all 10 starter luxury products have valid unique SKUs, slugs, pricing, cat
     seenSkus.add(product.sku);
     seenSlugs.add(product.slug);
 
+    assert.equal(
+      excludedCategories.has(product.categorySlug),
+      false,
+      `Disallowed non-attire category ${product.categorySlug}`
+    );
     assert.ok(
       validCategorySlugs.has(product.categorySlug),
       `Unknown categorySlug ${product.categorySlug}`
@@ -77,15 +88,16 @@ test('all 10 starter luxury products have valid unique SKUs, slugs, pricing, cat
   }
 });
 
-test('preview mode data populates storefront categories, sections, testimonials, products, and media library', () => {
+test('preview mode data populates categories, sections, testimonials, products, custom requests, Aso Oke enquiries, and media library', () => {
   assert.ok(DEFAULT_SITE_SETTINGS.business_name.includes('MCFD J GLOBAL VENTURES'));
   assert.ok(DEFAULT_HOMEPAGE_SECTIONS.length >= 6);
+  assert.equal(DEFAULT_SITE_SETTINGS.process_steps.length, 4);
 
   const previewProducts = getPreviewAdminProducts();
-  assert.equal(previewProducts.length, 10);
+  assert.equal(previewProducts.length, 20);
 
   const previewCategories = getPreviewAdminCategories();
-  assert.equal(previewCategories.length, 5);
+  assert.equal(previewCategories.length, 6);
 
   const testimonials = getPreviewTestimonials();
   assert.equal(testimonials.length, 3);
@@ -99,8 +111,13 @@ test('preview mode data populates storefront categories, sections, testimonials,
   assert.ok(orders.length >= 5);
   assert.equal(customers.length, orders.length);
 
+  const customReqs = getPreviewCustomRequests();
+  assert.ok(customReqs.length >= 2);
+  const asoEnqs = getPreviewAsoOkeEnquiries();
+  assert.ok(asoEnqs.length >= 1);
+
   const media = getPreviewMediaLibrary();
-  assert.equal(media.length, 14);
+  assert.equal(media.length, 26);
   for (const asset of media) {
     assertValidLocalJpeg(asset.public_url);
   }

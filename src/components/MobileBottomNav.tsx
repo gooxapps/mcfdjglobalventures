@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, LayoutGrid, MessageCircle, ShoppingBag, Store } from 'lucide-react';
+import { Crown, Home, Palette, ShoppingBag, Store } from 'lucide-react';
 import { useCart } from '@/src/contexts/CartContext';
 
 export function MobileBottomNav() {
@@ -9,7 +9,7 @@ export function MobileBottomNav() {
   return (
     <nav
       aria-label="Mobile bottom navigation"
-      className="no-print lg:hidden fixed bottom-0 inset-x-0 z-40 bg-[#090909]/95 backdrop-blur-md border-t border-[#D4AF5A]/30 text-neutral-300 shadow-[0_-6px_24px_rgba(0,0,0,0.35)]"
+      className="no-print lg:hidden fixed bottom-0 inset-x-0 z-40 bg-[#250628]/95 backdrop-blur-md border-t border-[#D4AF5A]/30 text-neutral-200 shadow-[0_-6px_24px_rgba(37,6,40,0.38)]"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div className="grid grid-cols-5 h-15">
@@ -18,7 +18,7 @@ export function MobileBottomNav() {
           end
           className={({ isActive }) =>
             `flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors ${
-              isActive ? 'text-[#E8BE62]' : 'text-neutral-300 hover:text-white'
+              isActive ? 'text-[#E8BE62]' : 'text-neutral-200 hover:text-white'
             }`
           }
         >
@@ -34,7 +34,7 @@ export function MobileBottomNav() {
           to="/shop"
           className={({ isActive }) =>
             `flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors ${
-              isActive ? 'text-[#E8BE62]' : 'text-neutral-300 hover:text-white'
+              isActive ? 'text-[#E8BE62]' : 'text-neutral-200 hover:text-white'
             }`
           }
         >
@@ -47,17 +47,33 @@ export function MobileBottomNav() {
         </NavLink>
 
         <NavLink
-          to="/collections"
+          to="/custom-design"
           className={({ isActive }) =>
             `flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors ${
-              isActive ? 'text-[#E8BE62]' : 'text-neutral-300 hover:text-white'
+              isActive ? 'text-[#E8BE62]' : 'text-neutral-200 hover:text-white'
             }`
           }
         >
           {({ isActive }) => (
             <>
-              <LayoutGrid className={`w-4 h-4 ${isActive ? 'text-[#E8BE62]' : ''}`} />
-              <span>Categories</span>
+              <Palette className={`w-4 h-4 ${isActive ? 'text-[#E8BE62]' : ''}`} />
+              <span>Custom</span>
+            </>
+          )}
+        </NavLink>
+
+        <NavLink
+          to="/aso-oke"
+          className={({ isActive }) =>
+            `flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors ${
+              isActive ? 'text-[#E8BE62]' : 'text-neutral-200 hover:text-white'
+            }`
+          }
+        >
+          {({ isActive }) => (
+            <>
+              <Crown className={`w-4 h-4 ${isActive ? 'text-[#E8BE62]' : ''}`} />
+              <span>Aso Oke</span>
             </>
           )}
         </NavLink>
@@ -65,34 +81,18 @@ export function MobileBottomNav() {
         <button
           type="button"
           onClick={openDrawer}
-          className="relative flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-neutral-300 hover:text-[#E8BE62] transition-colors"
+          className="relative flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-neutral-200 hover:text-[#E8BE62] transition-colors"
         >
           <span className="relative">
             <ShoppingBag className="w-4 h-4" />
             {totalItems > 0 && (
-              <span className="absolute -top-1.5 -right-2 min-w-[15px] h-[15px] px-1 rounded-full bg-[#D4AF5A] text-[#090909] text-[9px] font-bold flex items-center justify-center tabular-nums">
+              <span className="absolute -top-1.5 -right-2 min-w-[15px] h-[15px] px-1 rounded-full bg-[#D4AF5A] text-[#250628] text-[9px] font-bold flex items-center justify-center tabular-nums">
                 {totalItems}
               </span>
             )}
           </span>
           <span>Bag</span>
         </button>
-
-        <NavLink
-          to="/contact"
-          className={({ isActive }) =>
-            `flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors ${
-              isActive ? 'text-[#E8BE62]' : 'text-neutral-300 hover:text-white'
-            }`
-          }
-        >
-          {({ isActive }) => (
-            <>
-              <MessageCircle className={`w-4 h-4 ${isActive ? 'text-[#E8BE62]' : ''}`} />
-              <span>Contact</span>
-            </>
-          )}
-        </NavLink>
       </div>
     </nav>
   );

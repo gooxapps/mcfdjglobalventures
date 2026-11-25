@@ -7,8 +7,10 @@ import { STARTER_LUXURY_PRODUCTS } from '@/src/lib/starterCatalog';
 import type {
   ActivityLog,
   AdminUserRecord,
+  AsoOkeEnquiry,
   Banner,
   Category,
+  CustomDesignRequest,
   Customer,
   HomepageSection,
   MediaAsset,
@@ -57,7 +59,7 @@ export function getPreviewAdminProducts(): Product[] {
       is_archived: false,
       seo_title: `${item.name} | MCFD J GLOBAL VENTURES`,
       seo_description: item.short_description,
-      sales_count: Math.max(12, 48 - idx * 4),
+      sales_count: Math.max(12, 52 - idx * 2),
       created_at: now,
       updated_at: now,
       images: [
@@ -88,12 +90,12 @@ export function getPreviewAdminOrders(): Order[] {
       customer_phone: '+1 780 555 0142',
       customer_email: 'blessing.okafor@example.com',
       delivery_address: '10420 Jasper Ave, Edmonton, AB, Canada',
-      customer_notes: 'Please confirm evening delivery time via WhatsApp.',
+      customer_notes: 'Please confirm chest/waist measurement fitting via WhatsApp.',
       internal_notes: 'Preview order entry',
-      subtotal: 289.99,
+      subtotal: 169.0,
       delivery_charge: 0,
       tax_amount: 0,
-      total: 289.99,
+      total: 169.0,
       currency: 'CAD',
       order_status: 'Pending Confirmation',
       payment_status: 'Awaiting Payment',
@@ -107,13 +109,13 @@ export function getPreviewAdminOrders(): Order[] {
           order_id: 'preview-ord-1',
           product_id: 'preview-prod-1',
           variant_id: null,
-          product_name: 'Noir Pleated Silk Maxi Dress',
-          product_sku: 'MCFDJ-WM-001',
+          product_name: STARTER_LUXURY_PRODUCTS[0].name,
+          product_sku: STARTER_LUXURY_PRODUCTS[0].sku,
           size: 'M',
-          colour: 'Obsidian Black',
+          colour: 'Emerald & Sunshine',
           quantity: 1,
-          unit_price: 289.99,
-          subtotal: 289.99,
+          unit_price: 169.0,
+          subtotal: 169.0,
           image_url: STARTER_LUXURY_PRODUCTS[0].main_image_url,
         },
       ],
@@ -128,10 +130,10 @@ export function getPreviewAdminOrders(): Order[] {
       delivery_address: '28 Kensington High St, London, UK',
       customer_notes: '',
       internal_notes: '',
-      subtotal: 359.0,
+      subtotal: 340.0,
       delivery_charge: 0,
       tax_amount: 0,
-      total: 359.0,
+      total: 340.0,
       currency: 'CAD',
       order_status: 'Confirmed',
       payment_status: 'Paid',
@@ -143,16 +145,16 @@ export function getPreviewAdminOrders(): Order[] {
         {
           id: 'preview-oi-2',
           order_id: 'preview-ord-2',
-          product_id: 'preview-prod-3',
+          product_id: 'preview-prod-2',
           variant_id: null,
-          product_name: 'Atelier Structured Calfskin Handbag',
-          product_sku: 'MCFDJ-BG-003',
-          size: 'One Size',
-          colour: 'Jet Black',
+          product_name: STARTER_LUXURY_PRODUCTS[1].name,
+          product_sku: STARTER_LUXURY_PRODUCTS[1].sku,
+          size: 'M',
+          colour: 'Crimson & Marigold Kente',
           quantity: 1,
-          unit_price: 359.0,
-          subtotal: 359.0,
-          image_url: STARTER_LUXURY_PRODUCTS[2].main_image_url,
+          unit_price: 340.0,
+          subtotal: 340.0,
+          image_url: STARTER_LUXURY_PRODUCTS[1].main_image_url,
         },
       ],
     },
@@ -164,12 +166,12 @@ export function getPreviewAdminOrders(): Order[] {
       customer_phone: '+1 416 555 0198',
       customer_email: 'grace.j@example.com',
       delivery_address: '88 Bloor St W, Toronto, ON, Canada',
-      customer_notes: 'Gift wrap requested.',
+      customer_notes: 'Include matching Gele pleats please.',
       internal_notes: '',
-      subtotal: 594.0,
+      subtotal: 540.0,
       delivery_charge: 0,
       tax_amount: 0,
-      total: 594.0,
+      total: 540.0,
       currency: 'CAD',
       order_status: 'Processing',
       payment_status: 'Paid',
@@ -181,30 +183,30 @@ export function getPreviewAdminOrders(): Order[] {
         {
           id: 'preview-oi-3',
           order_id: 'preview-ord-3',
-          product_id: 'preview-prod-2',
+          product_id: 'preview-prod-3',
           variant_id: null,
-          product_name: 'Champagne Contrast-Lapel Blazer',
-          product_sku: 'MCFDJ-MN-002',
+          product_name: STARTER_LUXURY_PRODUCTS[2].name,
+          product_sku: STARTER_LUXURY_PRODUCTS[2].sku,
           size: 'L',
-          colour: 'Warm Ivory',
+          colour: 'Bright Emerald & Gold',
           quantity: 1,
-          unit_price: 349.0,
-          subtotal: 349.0,
-          image_url: STARTER_LUXURY_PRODUCTS[1].main_image_url,
+          unit_price: 295.0,
+          subtotal: 295.0,
+          image_url: STARTER_LUXURY_PRODUCTS[2].main_image_url,
         },
         {
           id: 'preview-oi-4',
           order_id: 'preview-ord-3',
-          product_id: 'preview-prod-4',
+          product_id: 'preview-prod-5',
           variant_id: null,
-          product_name: 'Champagne Nude Stiletto Pumps',
-          product_sku: 'MCFDJ-FW-004',
-          size: '39',
-          colour: 'Champagne Nude',
+          product_name: STARTER_LUXURY_PRODUCTS[4].name,
+          product_sku: STARTER_LUXURY_PRODUCTS[4].sku,
+          size: 'L/XL',
+          colour: 'Turquoise & Coral Pink',
           quantity: 1,
           unit_price: 245.0,
           subtotal: 245.0,
-          image_url: STARTER_LUXURY_PRODUCTS[3].main_image_url,
+          image_url: STARTER_LUXURY_PRODUCTS[4].main_image_url,
         },
       ],
     },
@@ -218,10 +220,10 @@ export function getPreviewAdminOrders(): Order[] {
       delivery_address: 'Victoria Island, Lagos, Nigeria',
       customer_notes: '',
       internal_notes: '',
-      subtotal: 495.0,
+      subtotal: 465.0,
       delivery_charge: 0,
       tax_amount: 0,
-      total: 495.0,
+      total: 465.0,
       currency: 'CAD',
       order_status: 'Delivered',
       payment_status: 'Paid',
@@ -233,16 +235,16 @@ export function getPreviewAdminOrders(): Order[] {
         {
           id: 'preview-oi-5',
           order_id: 'preview-ord-4',
-          product_id: 'preview-prod-6',
+          product_id: 'preview-prod-4',
           variant_id: null,
-          product_name: 'Aurelien 18K Gold Chronograph Watch',
-          product_sku: 'MCFDJ-JW-006',
-          size: '40mm',
-          colour: 'Champagne Gold',
+          product_name: STARTER_LUXURY_PRODUCTS[3].name,
+          product_sku: STARTER_LUXURY_PRODUCTS[3].sku,
+          size: 'XL',
+          colour: 'Imperial Purple & Gold',
           quantity: 1,
-          unit_price: 495.0,
-          subtotal: 495.0,
-          image_url: STARTER_LUXURY_PRODUCTS[5].main_image_url,
+          unit_price: 465.0,
+          subtotal: 465.0,
+          image_url: STARTER_LUXURY_PRODUCTS[3].main_image_url,
         },
       ],
     },
@@ -256,10 +258,10 @@ export function getPreviewAdminOrders(): Order[] {
       delivery_address: '225 7 Ave SW, Calgary, AB, Canada',
       customer_notes: '',
       internal_notes: '',
-      subtotal: 239.0,
+      subtotal: 240.0,
       delivery_charge: 0,
       tax_amount: 0,
-      total: 239.0,
+      total: 240.0,
       currency: 'CAD',
       order_status: 'Delivered',
       payment_status: 'Paid',
@@ -271,16 +273,16 @@ export function getPreviewAdminOrders(): Order[] {
         {
           id: 'preview-oi-6',
           order_id: 'preview-ord-5',
-          product_id: 'preview-prod-9',
+          product_id: 'preview-prod-7',
           variant_id: null,
-          product_name: 'Milano Gold-Buckle Leather Loafers',
-          product_sku: 'MCFDJ-FW-009',
-          size: '43',
-          colour: 'Polished Black',
+          product_name: STARTER_LUXURY_PRODUCTS[6].name,
+          product_sku: STARTER_LUXURY_PRODUCTS[6].sku,
+          size: 'L',
+          colour: 'Royal Cobalt & Gold',
           quantity: 1,
-          unit_price: 239.0,
-          subtotal: 239.0,
-          image_url: STARTER_LUXURY_PRODUCTS[8].main_image_url,
+          unit_price: 240.0,
+          subtotal: 240.0,
+          image_url: STARTER_LUXURY_PRODUCTS[6].main_image_url,
         },
       ],
     },
@@ -316,10 +318,10 @@ export function getPreviewTestimonials(): Testimonial[] {
     {
       id: 'preview-test-1',
       customer_name: 'Amaka Nwosu',
-      customer_role: 'Private Styling Client',
+      customer_role: 'Bridal Client',
       location: 'Toronto, Canada',
       quote:
-        'The Noir Pleated Silk Maxi Dress arrived impeccably tailored. Coordinating sizing and delivery directly on WhatsApp felt effortless and deeply personal.',
+        'The Rainbow Kente Mermaid Gown and coral Iro & Buba arrived impeccably tailored. Every vibrant colour popped in our wedding photographs!',
       rating: 5,
       is_published: true,
       sort_order: 1,
@@ -328,10 +330,10 @@ export function getPreviewTestimonials(): Testimonial[] {
     {
       id: 'preview-test-2',
       customer_name: 'Daniel Adeyemi',
-      customer_role: 'Executive Client',
+      customer_role: 'Groom & Executive Client',
       location: 'London, United Kingdom',
       quote:
-        'From the Champagne Contrast-Lapel Blazer to the Milano Loafers, every piece carries unmistakable weight, clean stitching, and refined finish.',
+        'From the Emerald Senator Kaftan to my Royal Purple Aso Oke Agbada, every stitch carries regal weight and sharp native finish.',
       rating: 5,
       is_published: true,
       sort_order: 2,
@@ -340,10 +342,10 @@ export function getPreviewTestimonials(): Testimonial[] {
     {
       id: 'preview-test-3',
       customer_name: 'Claire Beaumont',
-      customer_role: 'Wardrobe Collector',
+      customer_role: 'Event Host',
       location: 'Edmonton, Canada',
       quote:
-        'MCFD J GLOBAL VENTURES elevates every unboxing into an atelier ritual. Their calfskin handbag and concierge updates are truly unmatched.',
+        'MCFD J GLOBAL VENTURES dressed my entire bridal train in matching magenta, gold, and teal Aso Ebi sets—ready to wear and delivered on schedule.',
       rating: 5,
       is_published: true,
       sort_order: 3,
@@ -352,10 +354,130 @@ export function getPreviewTestimonials(): Testimonial[] {
   ];
 }
 
+const PREVIEW_CDR_KEY = 'mcfdj_preview_custom_requests_v1';
+const PREVIEW_ASO_KEY = 'mcfdj_preview_aso_oke_enquiries_v1';
+
+export function getPreviewCustomRequests(): CustomDesignRequest[] {
+  const now = new Date().toISOString();
+  const seeded: CustomDesignRequest[] = [
+    {
+      id: 'preview-cdr-1',
+      request_reference: '#CDR-1004',
+      name: 'Chidinma Okafor',
+      email: 'chidinma@example.com',
+      whatsapp_number: '+1 780 555 0119',
+      customization_type: 'Custom Outfit',
+      reference_image_url: LOCAL_BRAND_ASSETS.customCreationImage,
+      description: 'Deep royal purple mermaid reception gown with gold beadwork along bodice and train.',
+      quantity: 1,
+      event_date: '2026-12-19',
+      delivery_location: 'Edmonton, AB, Canada',
+      status: 'New',
+      quoted_amount: null,
+      internal_notes: 'Awaiting measurements confirmation on WhatsApp.',
+      created_at: now,
+      updated_at: now,
+    },
+    {
+      id: 'preview-cdr-2',
+      request_reference: '#CDR-1003',
+      name: 'Tunde Balogun',
+      email: 'tunde.b@example.com',
+      whatsapp_number: '+44 7700 900456',
+      customization_type: 'Branded Souvenir',
+      reference_image_url: LOCAL_BRAND_ASSETS.souvenirsBannerImage,
+      description: 'Gold-monogrammed royal purple tote bags and insulated flasks engraved for our anniversary dinner.',
+      quantity: 50,
+      event_date: '2026-12-28',
+      delivery_location: 'Manchester, United Kingdom',
+      status: 'Quoted',
+      quoted_amount: 1850,
+      internal_notes: 'Digital crest proof approved.',
+      created_at: now,
+      updated_at: now,
+    },
+  ];
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      const raw = sessionStorage.getItem(PREVIEW_CDR_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as CustomDesignRequest[];
+        return [...parsed, ...seeded];
+      }
+    }
+  } catch {
+    // Ignore storage errors
+  }
+  return seeded;
+}
+
+export function addPreviewCustomRequest(item: CustomDesignRequest): void {
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      const raw = sessionStorage.getItem(PREVIEW_CDR_KEY);
+      const list = raw ? (JSON.parse(raw) as CustomDesignRequest[]) : [];
+      sessionStorage.setItem(PREVIEW_CDR_KEY, JSON.stringify([item, ...list].slice(0, 20)));
+    }
+  } catch {
+    // Ignore storage quota errors
+  }
+}
+
+export function getPreviewAsoOkeEnquiries(): AsoOkeEnquiry[] {
+  const now = new Date().toISOString();
+  const seeded: AsoOkeEnquiry[] = [
+    {
+      id: 'preview-aso-1',
+      enquiry_reference: '#ASO-1005',
+      name: 'Folake & Adewale',
+      email: 'folake.ade@example.com',
+      whatsapp_number: '+1 416 555 0188',
+      enquiry_type: 'Traditional Wedding Outfits',
+      group_size: '25-40 Guests',
+      quantity: 30,
+      event_date: '2027-01-16',
+      delivery_location: 'Toronto, ON, Canada',
+      reference_image_url: LOCAL_BRAND_ASSETS.heroImage,
+      notes: 'Couple Aso Oke Agbada + Iro/Buba with matching purple & champagne gold gele packs for immediate family.',
+      status: 'In Review',
+      quoted_amount: 4200,
+      internal_notes: 'Weaving sample dispatched.',
+      created_at: now,
+      updated_at: now,
+    },
+  ];
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      const raw = sessionStorage.getItem(PREVIEW_ASO_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as AsoOkeEnquiry[];
+        return [...parsed, ...seeded];
+      }
+    }
+  } catch {
+    // Ignore storage errors
+  }
+  return seeded;
+}
+
+export function addPreviewAsoOkeEnquiry(item: AsoOkeEnquiry): void {
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      const raw = sessionStorage.getItem(PREVIEW_ASO_KEY);
+      const list = raw ? (JSON.parse(raw) as AsoOkeEnquiry[]) : [];
+      sessionStorage.setItem(PREVIEW_ASO_KEY, JSON.stringify([item, ...list].slice(0, 20)));
+    }
+  } catch {
+    // Ignore storage quota errors
+  }
+}
+
 export function getPreviewMediaLibrary(): MediaAsset[] {
   const now = new Date().toISOString();
   const entries = [
-    { name: 'hero_luxury_atelier.jpg', url: LOCAL_BRAND_ASSETS.heroImage, folder: 'banners', bucket: 'banners' },
+    { name: 'hero_african_aso_oke_couple.jpg', url: LOCAL_BRAND_ASSETS.heroImage, folder: 'banners', bucket: 'banners' },
+    { name: 'banner_custom_creation_atelier.jpg', url: LOCAL_BRAND_ASSETS.customCreationImage, folder: 'banners', bucket: 'banners' },
+    { name: 'banner_souvenirs_collection.jpg', url: LOCAL_BRAND_ASSETS.souvenirsBannerImage, folder: 'banners', bucket: 'banners' },
     { name: 'promo_concierge_atelier.jpg', url: LOCAL_BRAND_ASSETS.promoImage, folder: 'banners', bucket: 'banners' },
     { name: 'editorial_lookbook_banner.jpg', url: LOCAL_BRAND_ASSETS.lookbookImage, folder: 'banners', bucket: 'banners' },
     { name: 'about_atelier_craft.jpg', url: LOCAL_BRAND_ASSETS.aboutImage, folder: 'brand', bucket: 'brand-assets' },

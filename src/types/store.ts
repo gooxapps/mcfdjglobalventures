@@ -16,6 +16,14 @@ export type PaymentStatus =
   | 'Partially Paid'
   | 'Refunded';
 
+export type InquiryStatus =
+  | 'New'
+  | 'In Review'
+  | 'Quoted'
+  | 'In Production'
+  | 'Completed'
+  | 'Cancelled';
+
 export interface ProductColourOption {
   name: string;
   hex: string;
@@ -161,6 +169,45 @@ export interface Order {
   items?: OrderItem[];
 }
 
+export interface CustomDesignRequest {
+  id: string;
+  request_reference: string;
+  name: string;
+  email: string;
+  whatsapp_number: string;
+  customization_type: string;
+  reference_image_url: string;
+  description: string;
+  quantity: number;
+  event_date: string;
+  delivery_location: string;
+  status: InquiryStatus;
+  quoted_amount: number | null;
+  internal_notes: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AsoOkeEnquiry {
+  id: string;
+  enquiry_reference: string;
+  name: string;
+  email: string;
+  whatsapp_number: string;
+  enquiry_type: string;
+  group_size: string;
+  quantity: number;
+  event_date: string;
+  delivery_location: string;
+  reference_image_url: string;
+  notes: string;
+  status: InquiryStatus;
+  quoted_amount: number | null;
+  internal_notes: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface AboutValue {
   title: string;
   description: string;
@@ -169,6 +216,12 @@ export interface AboutValue {
 export interface FooterNavLink {
   label: string;
   url: string;
+}
+
+export interface ProcessStepConfig {
+  step: number;
+  title: string;
+  subtitle: string;
 }
 
 export interface SiteSettings {
@@ -210,12 +263,30 @@ export interface SiteSettings {
   og_image_url: string;
   announcement_text: string;
   promo_messages: string[];
+  hero_kicker: string;
   hero_headline: string;
   hero_subheadline_highlight: string;
   hero_description: string;
   hero_image_url: string;
+  hero_script_text: string;
   hero_button_text: string;
   hero_button_url: string;
+  hero_secondary_button_text: string;
+  hero_secondary_button_url: string;
+  custom_design_title: string;
+  custom_design_description: string;
+  custom_design_image_url: string;
+  custom_design_button_text: string;
+  process_title: string;
+  process_steps: ProcessStepConfig[];
+  aso_oke_banner_title: string;
+  aso_oke_banner_description: string;
+  aso_oke_banner_image_url: string;
+  aso_oke_banner_button_text: string;
+  souvenir_banner_title: string;
+  souvenir_banner_description: string;
+  souvenir_banner_image_url: string;
+  souvenir_banner_button_text: string;
   about_intro: string;
   about_mission: string;
   about_vision: string;

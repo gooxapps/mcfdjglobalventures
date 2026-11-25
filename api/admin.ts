@@ -20,12 +20,18 @@ import {
 } from './_lib/db';
 import {
   bulkUpdateAdminProducts,
+  deleteAdminAsoOkeEnquiry,
+  deleteAdminCustomRequest,
   deleteAdminProducts,
   getAdminDashboardMetrics,
   getAdminPendingOrdersCount,
   getAdminProducts,
+  listAdminAsoOkeEnquiries,
+  listAdminCustomRequests,
   listAdminOrders,
   saveAdminProduct,
+  updateAdminAsoOkeEnquiry,
+  updateAdminCustomRequest,
   updateAdminOrder,
   updateSiteSettingsAllowed,
 } from './_lib/storeQueries';
@@ -43,6 +49,7 @@ const ALLOWED_BUCKETS = new Set([
   'banners',
   'brand-assets',
   'testimonial-images',
+  'custom-samples',
   'media',
 ]);
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB
@@ -509,16 +516,34 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       let safeUpdates = rawBody;
 
       if (!canEditSettings) {
-        // content_manager may only edit storefront copy/hero/about/footer/seo fields
+        // content_manager may only edit storefront copy/hero/process/banners/about/footer/seo fields
         const contentAllowed = new Set([
           'announcement_text',
           'promo_messages',
+          'hero_kicker',
           'hero_headline',
           'hero_subheadline_highlight',
           'hero_description',
           'hero_image_url',
+          'hero_script_text',
           'hero_button_text',
           'hero_button_url',
+          'hero_secondary_button_text',
+          'hero_secondary_button_url',
+          'custom_design_title',
+          'custom_design_description',
+          'custom_design_image_url',
+          'custom_design_button_text',
+          'process_title',
+          'process_steps',
+          'aso_oke_banner_title',
+          'aso_oke_banner_description',
+          'aso_oke_banner_image_url',
+          'aso_oke_banner_button_text',
+          'souvenir_banner_title',
+          'souvenir_banner_description',
+          'souvenir_banner_image_url',
+          'souvenir_banner_button_text',
           'about_intro',
           'about_mission',
           'about_vision',
@@ -873,6 +898,117 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       });
 
       return res.status(200).json({ updated: true });
+    }
+
+    // 8. Custom Design Requests & Aso Oke / Group Enquiries
+    if (subPath === 'custom-requests' && method === 'GET') {
+      if (!hasAdminPermission(caller.role, 'manage_requests')) {
+        return res.status(403).json({ error: 'Permission denied.' });
+      }
+      const requests = await listAdminCustomRequests();
+      return res.status(200).json({ requests });
+    }
+
+    if (subPath.startsWith('custom-requests/')) {
+      if (!hasAdminPermission(caller.role, 'manage_requests')) {
+        return res.status(403).json({ error: 'Permission denied.' });
+      }
+      const reqId = subPath.slice('custom-requests/'.length);
+      if (!isValidUuid(reqId)) {
+        return res.status(400).json({ error: 'Invalid custom design request ID.' });
+      }
+
+      if (method === 'PATCH') {
+        const body = parseJsonBody(req);
+        const updated = await updateAdminCustomRequest(reqId, {
+          status: typeof body.status === 'string' ? body.status : undefined,
+          quoted_amount:
+            body.quoted_amount !== undefined
+              ? body.quoted_amount === null || body.quoted_amount === ''
+                ? null
+                : Number(body.quoted_amount)
+              : undefined,
+          internal_notes:
+            typeof body.internal_notes === 'string' ? body.internal_notes : undefined,
+        });
+        await writeActivityLog({
+          adminId: caller.id,
+          adminEmail: caller.email,
+          action: 'custom_request_updated',
+          entityType: 'custom_design_requests',
+          entityId: reqId,
+          description: `Updated custom design request ${updated?.request_reference || reqId}.`,
+        });
+        return res.status(200).json({ request: updated });
+      }
+
+      if (method === 'DELETE') {
+        await deleteAdminCustomRequest(reqId);
+        await writeActivityLog({
+          adminId: caller.id,
+          adminEmail: caller.email,
+          action: 'custom_request_deleted',
+          entityType: 'custom_design_requests',
+          entityId: reqId,
+          description: `Deleted custom design request ${reqId}.`,
+        });
+        return res.status(200).json({ deleted: true });
+      }
+    }
+
+    if (subPath === 'aso-oke-enquiries' && method === 'GET') {
+      if (!hasAdminPermission(caller.role, 'manage_requests')) {
+        return res.status(403).json({ error: 'Permission denied.' });
+      }
+      const enquiries = await listAdminAsoOkeEnquiries();
+      return res.status(200).json({ enquiries });
+    }
+
+    if (subPath.startsWith('aso-oke-enquiries/')) {
+      if (!hasAdminPermission(caller.role, 'manage_requests')) {
+        return res.status(403).json({ error: 'Permission denied.' });
+      }
+      const enqId = subPath.slice('aso-oke-enquiries/'.length);
+      if (!isValidUuid(enqId)) {
+        return res.status(400).json({ error: 'Invalid Aso Oke enquiry ID.' });
+      }
+
+      if (method === 'PATCH') {
+        const body = parseJsonBody(req);
+        const updated = await updateAdminAsoOkeEnquiry(enqId, {
+          status: typeof body.status === 'string' ? body.status : undefined,
+          quoted_amount:
+            body.quoted_amount !== undefined
+              ? body.quoted_amount === null || body.quoted_amount === ''
+                ? null
+                : Number(body.quoted_amount)
+              : undefined,
+          internal_notes:
+            typeof body.internal_notes === 'string' ? body.internal_notes : undefined,
+        });
+        await writeActivityLog({
+          adminId: caller.id,
+          adminEmail: caller.email,
+          action: 'aso_oke_enquiry_updated',
+          entityType: 'aso_oke_enquiries',
+          entityId: enqId,
+          description: `Updated Aso Oke / group enquiry ${updated?.enquiry_reference || enqId}.`,
+        });
+        return res.status(200).json({ enquiry: updated });
+      }
+
+      if (method === 'DELETE') {
+        await deleteAdminAsoOkeEnquiry(enqId);
+        await writeActivityLog({
+          adminId: caller.id,
+          adminEmail: caller.email,
+          action: 'aso_oke_enquiry_deleted',
+          entityType: 'aso_oke_enquiries',
+          entityId: enqId,
+          description: `Deleted Aso Oke / group enquiry ${enqId}.`,
+        });
+        return res.status(200).json({ deleted: true });
+      }
     }
 
     return res.status(404).json({ error: 'Admin endpoint not found.' });
